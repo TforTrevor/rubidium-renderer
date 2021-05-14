@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "rub_app.hpp"
+
 static std::vector<char> readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -975,7 +977,8 @@ private:
 
 int main()
 {
-	HelloTriangleApplication app;
+	//HelloTriangleApplication app;
+	rub::RubApp app;
 
 	try
 	{

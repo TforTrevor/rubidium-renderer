@@ -98,6 +98,18 @@
       <AdditionalLibraryDirectories>C:\Users\Trevor\Documents\Github\rubidium-renderer\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.176.1\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -115,6 +127,18 @@
       <AdditionalLibraryDirectories>C:\Users\Trevor\Documents\Github\rubidium-renderer\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.176.1\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -136,6 +160,18 @@
       <AdditionalLibraryDirectories>C:\Users\Trevor\Documents\Github\rubidium-renderer\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.176.1\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -157,13 +193,65 @@
       <AdditionalLibraryDirectories>C:\Users\Trevor\Documents\Github\rubidium-renderer\glfw-3.3.4.bin.WIN64\lib-vc2019;C:\VulkanSDK\1.2.176.1\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Outputs>
+      </Outputs>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rub_app.cpp" />
+    <ClCompile Include="rub_device.cpp" />
+    <ClCompile Include="rub_pipeline.cpp" />
+    <ClCompile Include="rub_swap_chain.cpp" />
+    <ClCompile Include="rub_window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.frag" />
-    <None Include="shaders\shader.vert" />
+    <CustomBuild Include="shaders\shader.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile fragment shaders</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile fragment shaders</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile fragment shaders</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile fragment shaders</Message>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shader.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile vertex shaders</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile vertex shaders</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vertex shaders</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vertex shaders</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)%(Filename).vert.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)%(Filename).vert.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).vert.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).vert.spv</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rub_app.hpp" />
+    <ClInclude Include="rub_device.hpp" />
+    <ClInclude Include="rub_pipeline.hpp" />
+    <ClInclude Include="rub_swap_chain.hpp" />
+    <ClInclude Include="rub_window.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
