@@ -25,7 +25,8 @@ namespace rub
 	private:
 		RubWindow rubWindow{ WIDTH, HEIGHT, "Rubidium Renderer" };
 		RubDevice rubDevice{ rubWindow };
-		RubSwapChain rubSwapChain{ rubDevice, rubWindow.getExtent() };
+		std::unique_ptr<RubSwapChain> rubSwapChain;
+		//RubSwapChain rubSwapChain{ rubDevice, rubWindow.getExtent() };
 		std::unique_ptr<RubPipeline> rubPipeline;
 		VkPipelineLayout pipelineLayout;
 		std::vector<VkCommandBuffer> commandBuffers;
@@ -35,6 +36,9 @@ namespace rub
 		void createPipelineLayout();
 		void createPipeline();
 		void createCommandBuffers();
+		void freeCommandBuffers();
 		void drawFrame();
+		void recreateSwapChain();
+		void recordCommandBuffer(int imageIndex);
 	};
 }

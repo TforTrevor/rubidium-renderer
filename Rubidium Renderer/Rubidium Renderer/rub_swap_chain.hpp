@@ -2,6 +2,8 @@
 
 #include "rub_device.hpp"
 
+#include <memory>
+
 namespace rub
 {
 	class RubSwapChain
@@ -10,6 +12,7 @@ namespace rub
 		static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 		RubSwapChain(RubDevice& deviceRef, VkExtent2D windowExtent);
+		RubSwapChain(RubDevice& deviceRef, VkExtent2D windowExtent, std::shared_ptr<RubSwapChain> previous);
 		~RubSwapChain();
 
 		VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
@@ -28,18 +31,6 @@ namespace rub
 		VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
 	private:
-		void createSwapChain();
-		void createImageViews();
-		void createDepthResources();
-		void createRenderPass();
-		void createFramebuffers();
-		void createSyncObjects();
-
-		// Helper functions
-		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
 		VkFormat swapChainImageFormat;
 		VkExtent2D swapChainExtent;
 
@@ -56,11 +47,25 @@ namespace rub
 		VkExtent2D windowExtent;
 
 		VkSwapchainKHR swapChain;
+		std::shared_ptr<RubSwapChain> oldSwapChain;
 
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
 		std::vector<VkFence> imagesInFlight;
 		size_t currentFrame = 0;
+
+		void init();
+		void createSwapChain();
+		void createImageViews();
+		void createDepthResources();
+		void createRenderPass();
+		void createFramebuffers();
+		void createSyncObjects();
+
+		// Helper functions
+		VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+		VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	};
 }

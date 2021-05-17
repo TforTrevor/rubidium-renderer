@@ -14,9 +14,11 @@ namespace rub
 		glfwInit();
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
+		glfwSetWindowUserPointer(window, this);
+		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
 	void RubWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
@@ -25,6 +27,14 @@ namespace rub
 		{
 			throw std::runtime_error("failed to create window surface!");
 		}
+	}
+
+	void RubWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+	{
+		auto rubWindow = reinterpret_cast<RubWindow*>(glfwGetWindowUserPointer(window));
+		rubWindow->framebufferResized = true;
+		rubWindow->width = width;
+		rubWindow->height = height;
 	}
 
 	RubWindow::~RubWindow()
