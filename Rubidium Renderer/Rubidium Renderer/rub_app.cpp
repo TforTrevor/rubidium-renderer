@@ -26,10 +26,11 @@ namespace rub
 
 	void RubApp::loadModels()
 	{
-		std::vector<RubModel::Vertex> vertices{
-			{{0.0f, -0.5f}},
-			{{0.5f, 0.5f}},
-			{{-0.5f, 0.5f}}
+		std::vector<RubModel::Vertex> vertices
+		{
+			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 		};
 
 		rubModel = std::make_unique<RubModel>(rubDevice, vertices);
@@ -91,7 +92,7 @@ namespace rub
 			renderPassInfo.renderArea.extent = rubSwapChain.getSwapChainExtent();
 
 			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+			clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
 			clearValues[1].depthStencil = { 1.0f, 0 };
 			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 			renderPassInfo.pClearValues = clearValues.data();
@@ -99,7 +100,7 @@ namespace rub
 			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			rubPipeline->bind(commandBuffers[i]);
-			//vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
 			rubModel->bind(commandBuffers[i]);
 			rubModel->draw(commandBuffers[i]);
 
