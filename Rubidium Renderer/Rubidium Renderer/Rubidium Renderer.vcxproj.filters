@@ -36,14 +36,9 @@
     <ClCompile Include="rub_swap_chain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\shader.frag">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="shaders\shader.vert">
-      <Filter>Source Files\shaders</Filter>
-    </None>
+    <ClCompile Include="rub_model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rub_swap_chain.hpp">
@@ -61,5 +56,16 @@
     <ClInclude Include="rub_app.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="rub_model.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shaders\shader.frag">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\shader.vert">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

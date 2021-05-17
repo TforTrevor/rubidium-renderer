@@ -210,6 +210,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rub_app.cpp" />
     <ClCompile Include="rub_device.cpp" />
+    <ClCompile Include="rub_model.cpp" />
     <ClCompile Include="rub_pipeline.cpp" />
     <ClCompile Include="rub_swap_chain.cpp" />
     <ClCompile Include="rub_window.cpp" />
@@ -249,6 +250,7 @@
   <ItemGroup>
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_device.hpp" />
+    <ClInclude Include="rub_model.hpp" />
     <ClInclude Include="rub_pipeline.hpp" />
     <ClInclude Include="rub_swap_chain.hpp" />
     <ClInclude Include="rub_window.hpp" />

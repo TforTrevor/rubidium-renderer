@@ -7,6 +7,7 @@ namespace rub
 {
 	RubApp::RubApp()
 	{
+		loadModels();
 		createPipelineLayout();
 		createPipeline();
 		createCommandBuffers();
@@ -21,6 +22,17 @@ namespace rub
 		}
 
 		vkDeviceWaitIdle(rubDevice.getDevice());
+	}
+
+	void RubApp::loadModels()
+	{
+		std::vector<RubModel::Vertex> vertices{
+			{{0.0f, -0.5f}},
+			{{0.5f, 0.5f}},
+			{{-0.5f, 0.5f}}
+		};
+
+		rubModel = std::make_unique<RubModel>(rubDevice, vertices);
 	}
 
 	void RubApp::createPipelineLayout()
@@ -87,7 +99,9 @@ namespace rub
 			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			rubPipeline->bind(commandBuffers[i]);
-			vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+			//vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+			rubModel->bind(commandBuffers[i]);
+			rubModel->draw(commandBuffers[i]);
 
 			vkCmdEndRenderPass(commandBuffers[i]);
 			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS)
