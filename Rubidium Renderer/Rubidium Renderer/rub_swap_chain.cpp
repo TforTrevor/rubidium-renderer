@@ -273,7 +273,7 @@ namespace rub
 		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
 			if (vkCreateSemaphore(device.getDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) !=
 				VK_SUCCESS ||
@@ -302,21 +302,21 @@ namespace rub
 
 	VkPresentModeKHR RubSwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
-		for (const auto& availablePresentMode : availablePresentModes)
-		{
-			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-			{
-				std::cout << "Present mode: Mailbox" << std::endl;
-				return availablePresentMode;
-			}
-		}
+		//for (const auto& availablePresentMode : availablePresentModes)
+		//{
+		//	if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		//	{
+		//		std::cout << "Present mode: Mailbox" << std::endl;
+		//		return availablePresentMode;
+		//	}
+		//}
 
-		// for (const auto &availablePresentMode : availablePresentModes) {
-		//   if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-		//     std::cout << "Present mode: Immediate" << std::endl;
-		//     return availablePresentMode;
-		//   }
-		// }
+		 //for (const auto &availablePresentMode : availablePresentModes) {
+		 //  if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+		 //    std::cout << "Present mode: Immediate" << std::endl;
+		 //    return availablePresentMode;
+		 //  }
+		 //}
 
 		std::cout << "Present mode: V-Sync" << std::endl;
 		return VK_PRESENT_MODE_FIFO_KHR;
