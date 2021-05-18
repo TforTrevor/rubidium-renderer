@@ -26,14 +26,25 @@ namespace rub
 
 	void RubApp::loadModels()
 	{
-		std::vector<RubModel::Vertex> vertices
-		{
-			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		//std::vector<RubModel::Vertex> vertices
+		//{
+		//	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		//	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+		//	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+		//};
+
+		const std::vector<RubModel::Vertex> vertices = {
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 		};
 
-		rubModel = std::make_unique<RubModel>(rubDevice, vertices);
+		const std::vector<uint32_t> indices = {
+			0, 1, 2, 2, 3, 0
+		};
+
+		rubModel = std::make_unique<RubModel>(rubDevice, vertices, indices);
 	}
 
 	void RubApp::createPipelineLayout()

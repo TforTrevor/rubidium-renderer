@@ -23,7 +23,7 @@ namespace rub
 			static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 		};
 
-		RubModel(RubDevice& rubDevice, const std::vector<Vertex>& vertices);
+		RubModel(RubDevice& rubDevice, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 		~RubModel();
 
 		void bind(VkCommandBuffer commandBuffer);
@@ -31,10 +31,16 @@ namespace rub
 
 	private:
 		RubDevice& rubDevice;
+
 		VkBuffer vertexBuffer;
 		VkDeviceMemory vertexBufferMemory;
 		uint32_t vertexCount;
 
-		void createVertexBuffers(const std::vector<Vertex>& vertices);
+		VkBuffer indexBuffer;
+		VkDeviceMemory indexBufferMemory;
+		uint32_t indexCount;
+
+		void createVertexBuffer(const std::vector<Vertex>& vertices);
+		void createIndexBuffer(const std::vector<uint32_t>& indices);
 	};
 }

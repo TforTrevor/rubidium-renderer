@@ -4,12 +4,13 @@
 
 namespace rub
 {
-	RubModel::RubModel(RubDevice& device, const std::vector<Vertex>& vertices) : rubDevice{ device }
+	RubModel::RubModel(RubDevice& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) : rubDevice{ device }
 	{
-		createVertexBuffers(vertices);
+		createVertexBuffer(vertices);
+		createIndexBuffer(indices);
 	}
 
-	void RubModel::createVertexBuffers(const std::vector<Vertex>& vertices)
+	void RubModel::createVertexBuffer(const std::vector<Vertex>& vertices)
 	{
 		vertexCount = static_cast<uint32_t>(vertices.size());
 		assert(vertexCount >= 3 && "Vertex count must be at least 3");
@@ -32,16 +33,41 @@ namespace rub
 		vkFreeMemory(rubDevice.getDevice(), stagingBufferMemory, nullptr);
 	}
 
+	void RubModel::createIndexBuffer(const std::vector<uint32_t>& indices)
+	{
+		indexCount = static_cast<uint32_t>(indices.size());
+		assert(indexCount >= 3 && "Vertex count must be at least 3");
+		VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
+
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+		void* data;
+		vkMapMemory(rubDevice.getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
+		vkUnmapMemory(rubDevice.getDevice(), stagingBufferMemory);
+
+		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, vertexBufferMemory);
+
+		rubDevice.copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+		vkDestroyBuffer(rubDevice.getDevice(), stagingBuffer, nullptr);
+		vkFreeMemory(rubDevice.getDevice(), stagingBufferMemory, nullptr);
+	}
+
 	void RubModel::bind(VkCommandBuffer commandBuffer)
 	{
 		VkBuffer buffers[] = { vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	}
 
 	void RubModel::draw(VkCommandBuffer commandBuffer)
 	{
-		vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+		//vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 	}
 
 	std::vector<VkVertexInputBindingDescription> RubModel::Vertex::getBindingDescriptions()
@@ -72,5 +98,8 @@ namespace rub
 	{
 		vkDestroyBuffer(rubDevice.getDevice(), vertexBuffer, nullptr);
 		vkFreeMemory(rubDevice.getDevice(), vertexBufferMemory, nullptr);
+
+		vkDestroyBuffer(rubDevice.getDevice(), indexBuffer, nullptr);
+		vkFreeMemory(rubDevice.getDevice(), indexBufferMemory, nullptr);
 	}
 }
