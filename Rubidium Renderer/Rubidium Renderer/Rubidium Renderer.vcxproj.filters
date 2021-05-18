@@ -59,6 +59,9 @@
     <ClInclude Include="rub_model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vk_mem_alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\shader.frag">
