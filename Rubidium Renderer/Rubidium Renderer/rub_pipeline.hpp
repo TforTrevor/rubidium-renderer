@@ -19,6 +19,7 @@ namespace rub
 		std::vector<VkDynamicState> dynamicStateEnables;
 		VkPipelineDynamicStateCreateInfo dynamicStateInfo;
 
+		VkDescriptorSetLayout descriptorSetLayout = nullptr;
 		VkPipelineLayout pipelineLayout = nullptr;
 		VkRenderPass renderPass = nullptr;
 		uint32_t subpass = 0;

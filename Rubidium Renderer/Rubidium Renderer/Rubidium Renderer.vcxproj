@@ -212,8 +212,10 @@
     <ClCompile Include="rub_device.cpp" />
     <ClCompile Include="rub_model.cpp" />
     <ClCompile Include="rub_pipeline.cpp" />
+    <ClCompile Include="rub_renderer.cpp" />
     <ClCompile Include="rub_swap_chain.cpp" />
     <ClCompile Include="rub_window.cpp" />
+    <ClCompile Include="simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\shader.frag">
@@ -250,10 +252,13 @@
   <ItemGroup>
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_device.hpp" />
+    <ClInclude Include="rub_game_object.hpp" />
     <ClInclude Include="rub_model.hpp" />
     <ClInclude Include="rub_pipeline.hpp" />
+    <ClInclude Include="rub_renderer.hpp" />
     <ClInclude Include="rub_swap_chain.hpp" />
     <ClInclude Include="rub_window.hpp" />
+    <ClInclude Include="simple_render_system.hpp" />
     <ClInclude Include="vk_mem_alloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

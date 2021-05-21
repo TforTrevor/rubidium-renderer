@@ -355,8 +355,7 @@ namespace rub
 		return result;
 	}
 
-	VkResult RubSwapChain::submitCommandBuffers(
-		const VkCommandBuffer* buffers, uint32_t* imageIndex)
+	VkResult RubSwapChain::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex)
 	{
 		if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 		{

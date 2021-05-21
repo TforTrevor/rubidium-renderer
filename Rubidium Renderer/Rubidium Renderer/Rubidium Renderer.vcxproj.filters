@@ -24,9 +24,6 @@
     <ClCompile Include="rub_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="rub_app.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rub_pipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,6 +34,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="rub_model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rub_app.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rub_renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="simple_render_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -53,13 +59,22 @@
     <ClInclude Include="rub_device.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rub_app.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="rub_model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vk_mem_alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rub_app.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rub_renderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple_render_system.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rub_game_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

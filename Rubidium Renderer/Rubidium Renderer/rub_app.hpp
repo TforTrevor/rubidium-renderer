@@ -4,7 +4,8 @@
 #include "rub_pipeline.hpp"
 #include "rub_device.hpp"
 #include "rub_swap_chain.hpp"
-#include "rub_model.hpp"
+#include "rub_game_object.hpp"
+#include "rub_renderer.hpp"
 
 #include <memory>
 #include <vector>
@@ -25,20 +26,10 @@ namespace rub
 	private:
 		RubWindow rubWindow{ WIDTH, HEIGHT, "Rubidium Renderer" };
 		RubDevice rubDevice{ rubWindow };
-		std::unique_ptr<RubSwapChain> rubSwapChain;
-		//RubSwapChain rubSwapChain{ rubDevice, rubWindow.getExtent() };
-		std::unique_ptr<RubPipeline> rubPipeline;
-		VkPipelineLayout pipelineLayout;
-		std::vector<VkCommandBuffer> commandBuffers;
-		std::unique_ptr<RubModel> rubModel;
+		RubRenderer rubRenderer{ rubWindow, rubDevice };
+
+		std::vector<RubGameObject> gameObjects;
 
 		void loadModels();
-		void createPipelineLayout();
-		void createPipeline();
-		void createCommandBuffers();
-		void freeCommandBuffers();
-		void drawFrame();
-		void recreateSwapChain();
-		void recordCommandBuffer(int imageIndex);
 	};
 }

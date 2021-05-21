@@ -48,7 +48,7 @@ namespace rub
 		memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
 		vkUnmapMemory(rubDevice.getDevice(), stagingBufferMemory);
 
-		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, vertexBufferMemory);
+		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
 		rubDevice.copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
