@@ -28,11 +28,12 @@ namespace rub
 		void endFrame();
 		void beginRenderPass(VkCommandBuffer commandBuffer);
 		void endRenderPass(VkCommandBuffer commandBuffer);
+		std::shared_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
 
 	private:
 		RubWindow& rubWindow;
 		RubDevice& rubDevice;
-		std::unique_ptr<RubSwapChain> rubSwapChain;
+		std::shared_ptr<RubSwapChain> rubSwapChain;
 		std::vector<VkCommandBuffer> commandBuffers;
 		bool isFrameStarted = false;
 		uint32_t currentImageIndex;

@@ -1,4 +1,5 @@
 #include "rub_model.hpp"
+#include "mvp_matrix.hpp"
 
 #include <cassert>
 
@@ -56,6 +57,29 @@ namespace rub
 		vkFreeMemory(rubDevice.getDevice(), stagingBufferMemory, nullptr);
 	}
 
+	void RubModel::createUniformBuffers(int imageCount)
+	{
+		for (int i = 0; i < uniformBuffers.size(); i++)
+		{
+			vkDestroyBuffer(rubDevice.getDevice(), uniformBuffers[i], nullptr);
+			vkFreeMemory(rubDevice.getDevice(), uniformBuffersMemory[i], nullptr);
+		}
+
+		VkDeviceSize bufferSize = sizeof(MVPMatrix);
+
+		uniformBuffers.resize(imageCount);
+		uniformBuffersMemory.resize(imageCount);
+
+		for (size_t i = 0; i < imageCount; i++)
+		{
+			rubDevice.createBuffer(
+				bufferSize, 
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+				uniformBuffers[i], 
+				uniformBuffersMemory[i]);
+		}
+	}
+
 	void RubModel::bind(VkCommandBuffer commandBuffer)
 	{
 		VkBuffer buffers[] = { vertexBuffer };
@@ -101,5 +125,11 @@ namespace rub
 
 		vkDestroyBuffer(rubDevice.getDevice(), indexBuffer, nullptr);
 		vkFreeMemory(rubDevice.getDevice(), indexBufferMemory, nullptr);
+
+		for (int i = 0; i < uniformBuffers.size(); i++)
+		{
+			vkDestroyBuffer(rubDevice.getDevice(), uniformBuffers[i], nullptr);
+			vkFreeMemory(rubDevice.getDevice(), uniformBuffersMemory[i], nullptr);
+		}
 	}
 }

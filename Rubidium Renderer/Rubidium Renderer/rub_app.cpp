@@ -13,7 +13,7 @@ namespace rub
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getRenderPass() };
+		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getSwapChain(), rubRenderer.getRenderPass() };
 
 		while (!rubWindow.shouldClose())
 		{

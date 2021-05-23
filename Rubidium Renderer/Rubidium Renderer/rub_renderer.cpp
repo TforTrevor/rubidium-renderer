@@ -43,14 +43,14 @@ namespace rub
 		}
 
 		vkDeviceWaitIdle(rubDevice.getDevice());
-		rubSwapChain.reset(nullptr);
+		rubSwapChain.reset();
 		if (rubSwapChain == nullptr)
 		{
-			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent);
+			rubSwapChain = std::make_shared<RubSwapChain>(rubDevice, extent);
 		}
 		else
 		{
-			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent, std::move(rubSwapChain));
+			rubSwapChain = std::make_shared<RubSwapChain>(rubDevice, extent, std::move(rubSwapChain));
 			if (rubSwapChain->imageCount() != commandBuffers.size())
 			{
 				freeCommandBuffers();

@@ -250,6 +250,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mvp_matrix.hpp" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_device.hpp" />
     <ClInclude Include="rub_game_object.hpp" />
@@ -259,6 +260,7 @@
     <ClInclude Include="rub_swap_chain.hpp" />
     <ClInclude Include="rub_window.hpp" />
     <ClInclude Include="simple_render_system.hpp" />
+    <ClInclude Include="transform_component.hpp" />
     <ClInclude Include="vk_mem_alloc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

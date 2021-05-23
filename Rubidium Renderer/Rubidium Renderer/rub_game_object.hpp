@@ -19,6 +19,7 @@ namespace rub
 		//~RubGameObject() {}
 
 		std::shared_ptr<RubModel> model{};
+		glm::mat4 modelMatrix{};
 	private:
 		//static uint32_t currentId;
 		//uint32_t id;
