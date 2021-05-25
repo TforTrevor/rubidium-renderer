@@ -69,8 +69,8 @@ namespace rub
 		for (RubGameObject object : gameObjects)
 		{
 			//update uniform buffers
-					//make a model view matrix for rendering the object
-		//camera position
+			//make a model view matrix for rendering the object
+			//camera position
 			glm::vec3 camPos = { 0.f,0.f,-2.f };
 
 			glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
