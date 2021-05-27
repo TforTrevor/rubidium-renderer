@@ -38,21 +38,15 @@ namespace rub
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
-		void createUniformBuffers(int imageCount);
 
 	private:
 		RubDevice& rubDevice;
 
-		VkBuffer vertexBuffer;
-		VkDeviceMemory vertexBufferMemory;
+		AllocatedBuffer vertexBuffer;
 		uint32_t vertexCount;
 
-		VkBuffer indexBuffer;
-		VkDeviceMemory indexBufferMemory;
+		AllocatedBuffer indexBuffer;
 		uint32_t indexCount;
-
-		std::vector<VkBuffer> uniformBuffers;
-		std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 		void loadOBJ(const std::string modelPath);
 		void createVertexBuffer(const std::vector<Vertex>& vertices);

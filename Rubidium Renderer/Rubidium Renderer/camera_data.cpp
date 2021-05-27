@@ -10,19 +10,17 @@ namespace rub
 
 	void CameraData::createUniformBuffers()
 	{
-		uniformBuffers.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
-		uniformBufferMemory.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
+		allocatedBuffers.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
 		descriptorSets.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
 
 		for (int i = 0; i < swapChain->MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			device.createBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-				uniformBuffers[i], uniformBufferMemory[i]);
+			device.createBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, allocatedBuffers[i]);
 
 			device.getDescriptor(globalSetLayout, descriptorSets[i]);
 
 			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = uniformBuffers[i];
+			bufferInfo.buffer = allocatedBuffers[i].buffer;
 			bufferInfo.offset = 0;
 			bufferInfo.range = sizeof(GPUCameraData);
 
@@ -42,23 +40,22 @@ namespace rub
 	void CameraData::updateBuffers(GPUCameraData cameraData)
 	{
 		void* data;
-		vkMapMemory(device.getDevice(), uniformBufferMemory[currentFrame], 0, sizeof(uniformBuffers[currentFrame]), 0, &data);
+		vmaMapMemory(device.getAllocator(), allocatedBuffers[currentFrame].allocation, &data);
 		memcpy(data, &cameraData, sizeof(GPUCameraData));
-		vkUnmapMemory(device.getDevice(), uniformBufferMemory[currentFrame]);
+		vmaUnmapMemory(device.getAllocator(), allocatedBuffers[currentFrame].allocation);
 	}
 
 	void CameraData::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 	{
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-		currentFrame = (currentFrame + 1) % uniformBuffers.size();
+		currentFrame = (currentFrame + 1) % allocatedBuffers.size();
 	}
 
 	CameraData::~CameraData()
 	{
-		for (int i = 0; i < uniformBuffers.size(); i++)
+		for (int i = 0; i < allocatedBuffers.size(); i++)
 		{
-			vkDestroyBuffer(device.getDevice(), uniformBuffers[i], nullptr);
-			vkFreeMemory(device.getDevice(), uniformBufferMemory[i], nullptr);
+			vmaDestroyBuffer(device.getAllocator(), allocatedBuffers[i].buffer, allocatedBuffers[i].allocation);
 		}
 	}
 }

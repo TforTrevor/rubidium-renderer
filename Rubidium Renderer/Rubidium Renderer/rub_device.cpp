@@ -1,3 +1,4 @@
+#define VMA_IMPLEMENTATION
 #include "rub_device.hpp"
 
 #include <stdexcept>
@@ -56,6 +57,7 @@ namespace rub
 		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
+		createAllocator();
 		createCommandPool();
 		createDescriptorPool();
 	}
@@ -468,7 +470,7 @@ namespace rub
 		}
 	}
 
-	void RubDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+	void RubDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer)
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -476,25 +478,13 @@ namespace rub
 		bufferInfo.usage = usage;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create buffer!");
-		}
+		VmaAllocationCreateInfo allocInfo = {};
+		allocInfo.usage = memoryUsage;
 
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+		if (vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &allocatedBuffer.buffer, &allocatedBuffer.allocation, nullptr) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to allocate buffer memory!");
 		}
-
-		vkBindBufferMemory(device, buffer, bufferMemory, 0);
 	}
 
 	void RubDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -561,8 +551,20 @@ namespace rub
 		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
 	}
 
+	void RubDevice::createAllocator()
+	{
+		VmaAllocatorCreateInfo allocatorInfo = {};
+		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+		allocatorInfo.physicalDevice = physicalDevice;
+		allocatorInfo.device = device;
+		allocatorInfo.instance = instance;
+
+		vmaCreateAllocator(&allocatorInfo, &allocator);
+	}
+
 	RubDevice::~RubDevice()
 	{
+		vmaDestroyAllocator(allocator);
 		vkDestroyCommandPool(device, commandPool, nullptr);
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDevice(device, nullptr);

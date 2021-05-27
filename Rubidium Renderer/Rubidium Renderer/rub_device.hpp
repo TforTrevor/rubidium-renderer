@@ -9,6 +9,12 @@
 
 namespace rub
 {
+	struct AllocatedBuffer
+	{
+		VkBuffer buffer;
+		VmaAllocation allocation;
+	};
+
 	struct SwapChainSupportDetails
 	{
 		VkSurfaceCapabilitiesKHR capabilities;
@@ -41,13 +47,14 @@ namespace rub
 		VkSurfaceKHR getSurface() { return surface; }
 		VkQueue getGraphicsQueue() { return graphicsQueue; }
 		VkQueue getPresentQueue() { return presentQueue; }
+		VmaAllocator getAllocator() { return allocator; }
 
 		SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 		void getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet);
 
@@ -61,6 +68,7 @@ namespace rub
 		VkSurfaceKHR surface;
 		VkQueue graphicsQueue;
 		VkQueue presentQueue;
+		VmaAllocator allocator;
 
 		const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 		const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
@@ -73,6 +81,7 @@ namespace rub
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
+		void createAllocator();
 		void createCommandPool();
 		void createDescriptorPool();
 

@@ -27,8 +27,7 @@ namespace rub
 		std::shared_ptr<RubSwapChain>& swapChain;
 		VkDescriptorSetLayout& globalSetLayout;
 
-		std::vector<VkBuffer> uniformBuffers;
-		std::vector<VkDeviceMemory> uniformBufferMemory;
+		std::vector<AllocatedBuffer> allocatedBuffers;
 		std::vector<VkDescriptorSet> descriptorSets;
 
 		int currentFrame = 0;
