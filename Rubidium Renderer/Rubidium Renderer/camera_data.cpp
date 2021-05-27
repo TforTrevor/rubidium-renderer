@@ -48,7 +48,12 @@ namespace rub
 	void CameraData::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 	{
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-		currentFrame = (currentFrame + 1) % allocatedBuffers.size();
+		//Increment frame count when new command buffer is passed in (meaning new frame has started)
+		if (currentBuffer != commandBuffer)
+		{
+			currentBuffer = commandBuffer;
+			currentFrame = (currentFrame + 1) % allocatedBuffers.size();
+		}		
 	}
 
 	CameraData::~CameraData()

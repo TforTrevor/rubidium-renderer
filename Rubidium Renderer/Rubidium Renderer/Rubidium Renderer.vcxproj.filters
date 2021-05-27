@@ -80,12 +80,6 @@
     <ClInclude Include="rub_game_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="transform_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mvp_matrix.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="camera_data.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

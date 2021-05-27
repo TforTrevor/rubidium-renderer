@@ -1,5 +1,4 @@
 #include "rub_model.hpp"
-#include "mvp_matrix.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"

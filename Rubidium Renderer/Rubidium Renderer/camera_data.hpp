@@ -31,6 +31,7 @@ namespace rub
 		std::vector<VkDescriptorSet> descriptorSets;
 
 		int currentFrame = 0;
+		VkCommandBuffer currentBuffer;
 
 		void createUniformBuffers();
 	};
