@@ -2,6 +2,8 @@
 
 #include "rub_window.hpp"
 
+#include "vk_mem_alloc.h"
+
 #include <optional>
 #include <vector>
 
@@ -47,13 +49,13 @@ namespace rub
 		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		void getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet);
 
 	private:
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		RubWindow& window;
-		VkCommandPool commandPool;
 
 		VkDevice device;
 		VkSurfaceKHR surface;
@@ -63,12 +65,16 @@ namespace rub
 		const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 		const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
+		VkCommandPool commandPool;
+		VkDescriptorPool descriptorPool;
+
 		void createInstance();
 		void setupDebugMessenger();
 		void createSurface();
 		void pickPhysicalDevice();
 		void createLogicalDevice();
 		void createCommandPool();
+		void createDescriptorPool();
 
 		// helper functions
 		bool isDeviceSuitable(VkPhysicalDevice device);

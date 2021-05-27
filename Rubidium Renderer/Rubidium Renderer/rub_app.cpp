@@ -13,7 +13,7 @@ namespace rub
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getSwapChain(), rubRenderer.getRenderPass() };
+		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getSwapChain(), rubRenderer.getRenderPass(), rubRenderer.getGlobalDescriptor() };
 
 		while (!rubWindow.shouldClose())
 		{
@@ -23,7 +23,7 @@ namespace rub
 			if (commandBuffer != nullptr)
 			{
 				rubRenderer.beginRenderPass(commandBuffer);
-				renderSystem.renderModels(commandBuffer, gameObjects);
+				renderSystem.renderModels(commandBuffer, gameObjects, rubRenderer.getCameraData());
 				rubRenderer.endRenderPass(commandBuffer);
 				rubRenderer.endFrame();
 			}			

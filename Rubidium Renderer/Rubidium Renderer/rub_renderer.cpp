@@ -1,5 +1,9 @@
 #include "rub_renderer.hpp"
 
+#include <glm/glm.hpp>
+#include <glm\ext\matrix_transform.hpp>
+#include <glm\ext\matrix_clip_space.hpp>
+
 #include <stdexcept>
 #include <array>
 
@@ -9,6 +13,9 @@ namespace rub
 	{
 		recreateSwapChain();
 		createCommandBuffers();
+		createGlobalDescriptor();
+
+		cameraData = std::make_shared<CameraData>(device, rubSwapChain, globalDescriptor.globalSetLayout);
 	}
 
 	void RubRenderer::createCommandBuffers()
@@ -87,7 +94,26 @@ namespace rub
 			throw std::runtime_error("failed to begin recording command buffer!");
 		}
 
+		updateCamera();
+
 		return commandBuffer;
+	}
+
+	void RubRenderer::updateCamera()
+	{
+		//camera position
+		glm::vec3 camPos = { 0.0f, 0.0f, -2.0f };
+
+		glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
+		//camera projection
+		glm::mat4 projection = glm::perspective(glm::radians(70.f), rubSwapChain->getExtentAspectRatio(), 0.1f, 200.0f);
+		projection[1][1] *= -1;
+
+		GPUCameraData gpuData{};
+		gpuData.view = view;
+		gpuData.projection = projection;
+
+		cameraData->updateBuffers(gpuData);
 	}
 
 	void RubRenderer::endFrame()
@@ -155,8 +181,30 @@ namespace rub
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
+	void RubRenderer::createGlobalDescriptor()
+	{
+		VkDescriptorSetLayoutBinding camBufferBinding = {};
+		camBufferBinding.binding = 0;
+		camBufferBinding.descriptorCount = 1;
+		camBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		camBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.pNext = nullptr;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.flags = 0;
+		layoutInfo.pBindings = &camBufferBinding;
+
+		if (vkCreateDescriptorSetLayout(rubDevice.getDevice(), &layoutInfo, nullptr, &globalDescriptor.globalSetLayout) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+	}
+
 	RubRenderer::~RubRenderer()
 	{
 		freeCommandBuffers();
+		vkDestroyDescriptorSetLayout(rubDevice.getDevice(), globalDescriptor.globalSetLayout, nullptr);
 	}
 }

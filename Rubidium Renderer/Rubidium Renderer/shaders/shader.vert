@@ -7,10 +7,15 @@
 //    mat4 proj;
 //} mvp;
 
-layout( push_constant ) uniform constants
+layout( push_constant ) uniform Constants
 {
-	mat4 renderMatrix;
-} PushConstants;
+	mat4 modelMatrix;
+} pushConstants;
+
+layout(set = 0, binding = 0) uniform CameraBuffer{   
+	mat4 view;
+	mat4 projection;
+} cameraData;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -24,5 +29,5 @@ void main()
 	fragColor = normal;
 
     //gl_Position = mvp.proj * mvp.view * mvp.model * vec4(position, 0.0, 1.0);
-	gl_Position = PushConstants.renderMatrix * vec4(position, 1.0);
+	gl_Position = cameraData.projection * cameraData.view * pushConstants.modelMatrix * vec4(position, 1.0);
 }

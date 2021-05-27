@@ -57,6 +57,7 @@ namespace rub
 		pickPhysicalDevice();
 		createLogicalDevice();
 		createCommandPool();
+		createDescriptorPool();
 	}
 
 	void RubDevice::createInstance()
@@ -530,9 +531,40 @@ namespace rub
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
+	void RubDevice::createDescriptorPool()
+	{
+		//create a descriptor pool that will hold 10 uniform buffers
+		std::vector<VkDescriptorPoolSize> sizes =
+		{
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 }
+		};
+
+		VkDescriptorPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.flags = 0;
+		poolInfo.maxSets = 10;
+		poolInfo.poolSizeCount = (uint32_t)sizes.size();
+		poolInfo.pPoolSizes = sizes.data();
+
+		vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
+	}
+
+	void RubDevice::getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet)
+	{
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.pNext = nullptr;
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &setLayout;
+
+		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+	}
+
 	RubDevice::~RubDevice()
 	{
 		vkDestroyCommandPool(device, commandPool, nullptr);
+		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDevice(device, nullptr);
 
 		if (enableValidationLayers)
