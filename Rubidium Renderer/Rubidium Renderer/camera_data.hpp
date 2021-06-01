@@ -16,15 +16,16 @@ namespace rub
 	class CameraData
 	{
 	public:
-		CameraData(RubDevice& device, std::shared_ptr<RubSwapChain>& swapChain, VkDescriptorSetLayout& globalSetLayout);
+		CameraData(RubDevice& device, std::unique_ptr<RubSwapChain>& swapChain, VkDescriptorSetLayout& globalSetLayout);
 		~CameraData();
 
+		void recreateUniformBuffers(std::unique_ptr<RubSwapChain>& swapChain);
 		void updateBuffers(GPUCameraData cameraData);
 		void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+		void cleanup();
 
 	private:
 		RubDevice& device;
-		std::shared_ptr<RubSwapChain>& swapChain;
 		VkDescriptorSetLayout& globalSetLayout;
 
 		std::vector<AllocatedBuffer> allocatedBuffers;
@@ -32,7 +33,5 @@ namespace rub
 
 		int currentFrame = 0;
 		VkCommandBuffer currentBuffer;
-
-		void createUniformBuffers();
 	};
 }

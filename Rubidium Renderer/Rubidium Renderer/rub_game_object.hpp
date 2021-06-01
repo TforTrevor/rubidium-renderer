@@ -15,11 +15,11 @@ namespace rub
 			return RubGameObject{};
 		}
 
-		//RubGameObject(uint32_t id) : id{ id } {}
-		//~RubGameObject() {}
+		RubGameObject() {}
+		~RubGameObject() {}
 
 		std::shared_ptr<RubModel> model{};
-		glm::mat4 modelMatrix{};
+		glm::vec3 position;
 	private:
 		//static uint32_t currentId;
 		//uint32_t id;

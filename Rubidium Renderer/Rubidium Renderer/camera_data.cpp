@@ -2,14 +2,15 @@
 
 namespace rub
 {
-	CameraData::CameraData(RubDevice& device, std::shared_ptr<RubSwapChain>& swapChain, VkDescriptorSetLayout& globalSetLayout) 
-		: device{ device }, swapChain{ swapChain }, globalSetLayout{ globalSetLayout }
+	CameraData::CameraData(RubDevice& device, std::unique_ptr<RubSwapChain>& swapChain, VkDescriptorSetLayout& globalSetLayout) : device{ device }, globalSetLayout{ globalSetLayout }
 	{
-		createUniformBuffers();
+		recreateUniformBuffers(swapChain);
 	}
 
-	void CameraData::createUniformBuffers()
+	void CameraData::recreateUniformBuffers(std::unique_ptr<RubSwapChain>& swapChain)
 	{
+		cleanup();
+
 		allocatedBuffers.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
 		descriptorSets.resize(swapChain->MAX_FRAMES_IN_FLIGHT);
 
@@ -56,11 +57,16 @@ namespace rub
 		}		
 	}
 
-	CameraData::~CameraData()
+	void CameraData::cleanup()
 	{
 		for (int i = 0; i < allocatedBuffers.size(); i++)
 		{
 			vmaDestroyBuffer(device.getAllocator(), allocatedBuffers[i].buffer, allocatedBuffers[i].allocation);
 		}
+	}
+
+	CameraData::~CameraData()
+	{
+		cleanup();
 	}
 }

@@ -15,7 +15,7 @@ namespace rub
 		createCommandBuffers();
 		createGlobalDescriptor();
 
-		cameraData = std::make_shared<CameraData>(device, rubSwapChain, globalDescriptor.globalSetLayout);
+		cameraData = std::make_unique<CameraData>(device, rubSwapChain, globalDescriptor.globalSetLayout);
 	}
 
 	void RubRenderer::createCommandBuffers()
@@ -53,11 +53,11 @@ namespace rub
 		rubSwapChain.reset();
 		if (rubSwapChain == nullptr)
 		{
-			rubSwapChain = std::make_shared<RubSwapChain>(rubDevice, extent);
+			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent);
 		}
 		else
 		{
-			rubSwapChain = std::make_shared<RubSwapChain>(rubDevice, extent, std::move(rubSwapChain));
+			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent, std::move(rubSwapChain));
 			if (rubSwapChain->imageCount() != commandBuffers.size())
 			{
 				freeCommandBuffers();
@@ -102,7 +102,7 @@ namespace rub
 	void RubRenderer::updateCamera()
 	{
 		//camera position
-		glm::vec3 camPos = { 0.0f, 0.0f, -2.0f };
+		glm::vec3 camPos = { 0.0f, 0.0f, -3.0f };
 
 		glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
 		//camera projection

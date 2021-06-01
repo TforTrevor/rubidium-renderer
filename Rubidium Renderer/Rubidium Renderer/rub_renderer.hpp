@@ -38,21 +38,21 @@ namespace rub
 		void endFrame();
 		void beginRenderPass(VkCommandBuffer commandBuffer);
 		void endRenderPass(VkCommandBuffer commandBuffer);
-		std::shared_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
+		//std::shared_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
 		GlobalDescriptor& getGlobalDescriptor() { return globalDescriptor; };
-		std::shared_ptr<CameraData> getCameraData() { return cameraData; };
+		std::unique_ptr<CameraData>& getCameraData() { return cameraData; };
 
 	private:
 		RubWindow& rubWindow;
 		RubDevice& rubDevice;
 
-		std::shared_ptr<RubSwapChain> rubSwapChain;
+		std::unique_ptr<RubSwapChain> rubSwapChain;
 		std::vector<VkCommandBuffer> commandBuffers;
 		bool isFrameStarted = false;
 		uint32_t currentImageIndex;
 		
 		GlobalDescriptor globalDescriptor;
-		std::shared_ptr<CameraData> cameraData;
+		std::unique_ptr<CameraData> cameraData;
 
 		void createCommandBuffers();
 		void freeCommandBuffers();

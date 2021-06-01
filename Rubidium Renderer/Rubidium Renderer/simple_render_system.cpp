@@ -9,8 +9,7 @@
 
 namespace rub
 {
-	SimpleRenderSystem::SimpleRenderSystem(RubDevice& device, std::shared_ptr<RubSwapChain>& swapChain, VkRenderPass renderPass, GlobalDescriptor& globalDescriptor) 
-		: rubDevice{ device }, rubSwapChain{ swapChain }, globalDescriptor{ globalDescriptor }
+	SimpleRenderSystem::SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, GlobalDescriptor& globalDescriptor) : rubDevice{ device }, globalDescriptor{ globalDescriptor }
 	{
 		createPipelineLayout();
 		createPipeline(renderPass);
@@ -47,7 +46,7 @@ namespace rub
 		rubPipeline = std::make_unique<RubPipeline>(rubDevice, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::shared_ptr<CameraData> cameraData)
+	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<CameraData>& cameraData)
 	{
 		rubPipeline->bind(commandBuffer);
 		cameraData->bind(commandBuffer, pipelineLayout);
@@ -57,7 +56,8 @@ namespace rub
 			//make a model view matrix for rendering the object
 			
 			//model rotation
-			glm::mat4 model = glm::rotate(glm::mat4{ 1.0f }, glm::radians(frameNumber * 0.4f), glm::vec3(0, 1, 0));
+			glm::mat4 model = glm::translate(glm::mat4{ 1.0f }, object.position);
+			model = glm::rotate(model, glm::radians(frameNumber * 0.4f), glm::vec3(0, 1, 0));
 
 			MeshPushConstants constants;
 			constants.render_matrix = model;

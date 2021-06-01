@@ -13,7 +13,7 @@ namespace rub
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getSwapChain(), rubRenderer.getRenderPass(), rubRenderer.getGlobalDescriptor() };
+		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getRenderPass(), rubRenderer.getGlobalDescriptor() };
 
 		while (!rubWindow.shouldClose())
 		{
@@ -52,10 +52,18 @@ namespace rub
 		//	0, 1, 2, 2, 3, 0
 		//};
 
+		std::shared_ptr<RubModel> suzanne = std::make_shared<RubModel>(rubDevice, "models/suzanne_2.obj");
+
 		auto object = RubGameObject::createGameObject();
-		object.model = std::make_shared<RubModel>(rubDevice, "models/suzanne_2.obj");
+		object.model = suzanne;
+		object.position = glm::vec3(-1, 0, 0);
+
+		auto object2 = RubGameObject::createGameObject();
+		object2.model = suzanne;
+		object2.position = glm::vec3(1, 0, 0);
 
 		gameObjects.push_back(std::move(object));
+		gameObjects.push_back(std::move(object2));
 	}
 
 	RubApp::~RubApp()
