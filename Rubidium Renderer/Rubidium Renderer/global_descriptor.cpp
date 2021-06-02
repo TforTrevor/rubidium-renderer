@@ -14,14 +14,15 @@ namespace rub
 
 	void GlobalDescriptor::createLayouts()
 	{
-		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 0);
+		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 		VkDescriptorSetLayoutBinding sceneBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-		VkDescriptorSetLayoutBinding bindings[] = { cameraBinding, sceneBinding };
+		VkDescriptorSetLayoutBinding lightBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
+		VkDescriptorSetLayoutBinding bindings[] = { cameraBinding, sceneBinding, lightBinding };
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.pNext = nullptr;
-		layoutInfo.bindingCount = 2;
+		layoutInfo.bindingCount = 3;
 		layoutInfo.flags = 0;
 		layoutInfo.pBindings = bindings;
 
@@ -36,6 +37,9 @@ namespace rub
 		size_t sceneSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUSceneData)) * FRAME_COUNT;
 		device.createBuffer(sceneSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, sceneBuffer);
 
+		size_t lightSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPULightData)) * FRAME_COUNT;
+		device.createBuffer(lightSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, lightBuffer);
+
 		for (int i = 0; i < FRAME_COUNT; i++)
 		{
 			device.getDescriptor(setLayout, globalDescriptors[i]);
@@ -48,11 +52,16 @@ namespace rub
 			sceneBufferInfo.buffer = sceneBuffer.buffer;
 			sceneBufferInfo.range = sizeof(GPUSceneData);
 
+			VkDescriptorBufferInfo lightBufferInfo{};
+			lightBufferInfo.buffer = lightBuffer.buffer;
+			lightBufferInfo.range = sizeof(GPULightData);
+
 			VkWriteDescriptorSet cameraWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &cameraBufferInfo, 0);
 			VkWriteDescriptorSet sceneWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &sceneBufferInfo, 1);
-			VkWriteDescriptorSet setWrites[] = { cameraWrite, sceneWrite };
+			VkWriteDescriptorSet lightWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &lightBufferInfo, 2);
+			VkWriteDescriptorSet setWrites[] = { cameraWrite, sceneWrite, lightWrite };
 
-			vkUpdateDescriptorSets(device.getDevice(), 2, setWrites, 0, nullptr);
+			vkUpdateDescriptorSets(device.getDevice(), 3, setWrites, 0, nullptr);
 		}		
 	}
 
@@ -74,12 +83,22 @@ namespace rub
 		vmaUnmapMemory(device.getAllocator(), sceneBuffer.allocation);
 	}
 
+	void GlobalDescriptor::updateLightBuffer(GPULightData light)
+	{
+		char* lightData;
+		vmaMapMemory(device.getAllocator(), lightBuffer.allocation, (void**)& lightData);
+		lightData += VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPULightData)) * frameIndex;
+		memcpy(lightData, &light, sizeof(GPULightData));
+		vmaUnmapMemory(device.getAllocator(), lightBuffer.allocation);
+	}
+
 	void GlobalDescriptor::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 	{
 		uint32_t cameraOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUCameraData)) * frameIndex;
 		uint32_t sceneOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUSceneData)) * frameIndex;
-		uint32_t offsets[] = { cameraOffset, sceneOffset };
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &globalDescriptors[frameIndex], 2, offsets);
+		uint32_t lightOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPULightData)) * frameIndex;
+		uint32_t offsets[] = { cameraOffset, sceneOffset, lightOffset };
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &globalDescriptors[frameIndex], 3, offsets);
 
 		//Increment frame count when new command buffer is passed in (meaning new frame has started)
 		if (currentBuffer != commandBuffer)
@@ -93,6 +112,7 @@ namespace rub
 	{
 		vmaDestroyBuffer(device.getAllocator(), cameraBuffer.buffer, cameraBuffer.allocation);
 		vmaDestroyBuffer(device.getAllocator(), sceneBuffer.buffer, sceneBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), lightBuffer.buffer, lightBuffer.allocation);
 		vkDestroyDescriptorSetLayout(device.getDevice(), setLayout, nullptr);
 	}
 }

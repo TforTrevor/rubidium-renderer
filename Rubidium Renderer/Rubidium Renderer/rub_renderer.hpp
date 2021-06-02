@@ -30,7 +30,7 @@ namespace rub
 		void endFrame();
 		void beginRenderPass(VkCommandBuffer commandBuffer);
 		void endRenderPass(VkCommandBuffer commandBuffer);
-		//std::shared_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
+		std::unique_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
 		std::unique_ptr<GlobalDescriptor>& getGlobalDescriptor() { return globalDescriptor; };
 
 	private:
@@ -48,7 +48,6 @@ namespace rub
 		void createCommandBuffers();
 		void freeCommandBuffers();
 		void recreateSwapChain();
-		void createGlobalDescriptor();
 		void updateCamera();
 	};
 }

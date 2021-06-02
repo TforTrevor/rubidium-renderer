@@ -30,6 +30,6 @@ namespace rub
 
 		std::vector<RubGameObject> gameObjects;
 
-		void loadModels();
+		void loadObjects();
 	};
 }

@@ -9,11 +9,11 @@ namespace rub
 	class RubGameObject
 	{
 	public:
-		static RubGameObject createGameObject()
+		struct Material
 		{
-			//return RubGameObject{ currentId++ };
-			return RubGameObject{};
-		}
+			glm::vec4 albedo;
+			glm::vec4 maskMap; //r: metallic, g: roughness
+		};
 
 		RubGameObject() {}
 		~RubGameObject() {}
@@ -21,8 +21,6 @@ namespace rub
 		std::shared_ptr<RubModel> model{};
 		glm::vec3 position;
 		glm::vec3 rotation;
-	private:
-		//static uint32_t currentId;
-		//uint32_t id;
+		Material material;
 	};
 }

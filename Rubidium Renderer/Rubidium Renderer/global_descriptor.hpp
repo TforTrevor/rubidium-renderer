@@ -14,6 +14,7 @@ namespace rub
 		{
 			glm::mat4 view;
 			glm::mat4 projection;
+			glm::vec4 position;
 		};
 
 		struct GPUSceneData
@@ -23,13 +24,18 @@ namespace rub
 			glm::vec4 sunColor;
 		};
 
+		struct GPULightData
+		{
+			glm::vec4 lightPositions[4];
+			glm::vec4 lightColors[4];
+		};
+
 		GlobalDescriptor(RubDevice& device, std::unique_ptr<RubSwapChain>& swapChain);
 		~GlobalDescriptor();
 
-		void createLayouts();
-		void createBuffers();
 		void updateCameraBuffer(GPUCameraData camera);
 		void updateSceneBuffer(GPUSceneData scene);
+		void updateLightBuffer(GPULightData light);
 		void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 		VkDescriptorSetLayout getLayout() { return setLayout; };
 
@@ -39,10 +45,14 @@ namespace rub
 		VkDescriptorSetLayout setLayout;
 		AllocatedBuffer cameraBuffer;
 		AllocatedBuffer sceneBuffer;
+		AllocatedBuffer lightBuffer;
 		std::vector<VkDescriptorSet> globalDescriptors;
 
 		const int FRAME_COUNT;
 		int frameIndex = 0;
 		VkCommandBuffer currentBuffer;
+
+		void createLayouts();
+		void createBuffers();
 	};
 }
