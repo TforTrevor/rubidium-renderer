@@ -23,10 +23,12 @@ layout(location = 2) in vec2 texCoord;
 layout(location = 3) in vec3 color;
 
 layout(location = 0) out vec3 fragColor;
+layout(location = 1) out vec3 fragNormal;
 
 void main() 
 {
-	fragColor = normal;
+	fragColor = color;
+	fragNormal = normal;
 
     //gl_Position = mvp.proj * mvp.view * mvp.model * vec4(position, 0.0, 1.0);
 	gl_Position = cameraData.projection * cameraData.view * pushConstants.modelMatrix * vec4(position, 1.0);

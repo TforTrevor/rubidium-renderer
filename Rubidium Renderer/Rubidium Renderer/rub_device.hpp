@@ -57,6 +57,8 @@ namespace rub
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 		void getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet);
+		VkPhysicalDeviceProperties getDeviceProperties() { return deviceProperties; };
+		size_t padUniformBufferSize(size_t originalSize);
 
 	private:
 		VkInstance instance;
@@ -75,6 +77,8 @@ namespace rub
 
 		VkCommandPool commandPool;
 		VkDescriptorPool descriptorPool;
+
+		VkPhysicalDeviceProperties deviceProperties;
 
 		void createInstance();
 		void setupDebugMessenger();

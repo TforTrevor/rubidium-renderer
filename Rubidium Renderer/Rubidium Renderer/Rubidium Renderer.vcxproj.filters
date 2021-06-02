@@ -45,7 +45,7 @@
     <ClCompile Include="simple_render_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="camera_data.cpp">
+    <ClCompile Include="global_descriptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,7 +80,10 @@
     <ClInclude Include="rub_game_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="camera_data.hpp">
+    <ClInclude Include="vk_util.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="global_descriptor.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

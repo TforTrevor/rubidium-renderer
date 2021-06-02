@@ -1,21 +1,21 @@
 #include "simple_render_system.hpp"
 
-#include "camera_data.hpp"
-
 #include <stdexcept>
 #include <array>
 #include <glm\ext\matrix_transform.hpp>
 #include <glm\ext\matrix_clip_space.hpp>
+#include <glm\gtx\euler_angles.hpp>
 
 namespace rub
 {
-	SimpleRenderSystem::SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, GlobalDescriptor& globalDescriptor) : rubDevice{ device }, globalDescriptor{ globalDescriptor }
+	SimpleRenderSystem::SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor) : rubDevice{ device }
 	{
-		createPipelineLayout();
+		VkDescriptorSetLayout setLayout = globalDescriptor->getLayout();
+		createPipelineLayout(setLayout);
 		createPipeline(renderPass);
 	}
 
-	void SimpleRenderSystem::createPipelineLayout()
+	void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout& setLayout)
 	{
 		VkPushConstantRange pushConstant{};
 		pushConstant.offset = 0;
@@ -25,7 +25,7 @@ namespace rub
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pSetLayouts = &globalDescriptor.globalSetLayout;
+		pipelineLayoutInfo.pSetLayouts = &setLayout;
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
 		if (vkCreatePipelineLayout(rubDevice.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
@@ -46,10 +46,10 @@ namespace rub
 		rubPipeline = std::make_unique<RubPipeline>(rubDevice, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<CameraData>& cameraData)
+	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor)
 	{
 		rubPipeline->bind(commandBuffer);
-		cameraData->bind(commandBuffer, pipelineLayout);
+		globalDescriptor->bind(commandBuffer, pipelineLayout);
 		for (RubGameObject object : gameObjects)
 		{
 			//update uniform buffers
@@ -57,6 +57,7 @@ namespace rub
 			
 			//model rotation
 			glm::mat4 model = glm::translate(glm::mat4{ 1.0f }, object.position);
+			model *= glm::eulerAngleXYZ(object.rotation.x, object.rotation.y, object.rotation.z);
 			model = glm::rotate(model, glm::radians(frameNumber * 0.4f), glm::vec3(0, 1, 0));
 
 			MeshPushConstants constants;

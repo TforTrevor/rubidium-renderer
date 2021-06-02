@@ -20,6 +20,7 @@ namespace rub
 
 		std::shared_ptr<RubModel> model{};
 		glm::vec3 position;
+		glm::vec3 rotation;
 	private:
 		//static uint32_t currentId;
 		//uint32_t id;

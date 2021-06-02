@@ -139,6 +139,11 @@ namespace rub
 		{
 			throw std::runtime_error("failed to find a suitable GPU!");
 		}
+		else
+		{
+			vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+			///std::cout << "The GPU has a minimum buffer alignment of " << deviceProperties.limits.minUniformBufferOffsetAlignment << std::endl;
+		}
 	}
 
 	void RubDevice::createLogicalDevice()
@@ -526,7 +531,8 @@ namespace rub
 		//create a descriptor pool that will hold 10 uniform buffers
 		std::vector<VkDescriptorPoolSize> sizes =
 		{
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 }
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 }
 		};
 
 		VkDescriptorPoolCreateInfo poolInfo = {};
@@ -560,6 +566,18 @@ namespace rub
 		allocatorInfo.instance = instance;
 
 		vmaCreateAllocator(&allocatorInfo, &allocator);
+	}
+
+	size_t RubDevice::padUniformBufferSize(size_t originalSize)
+	{
+		// Calculate required alignment based on minimum device offset alignment
+		size_t minUboAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
+		size_t alignedSize = originalSize;
+		if (minUboAlignment > 0)
+		{
+			alignedSize = (alignedSize + minUboAlignment - 1) & ~(minUboAlignment - 1);
+		}
+		return alignedSize;
 	}
 
 	RubDevice::~RubDevice()

@@ -1,5 +1,7 @@
 #include "rub_renderer.hpp"
 
+#include "vk_util.hpp"
+
 #include <glm/glm.hpp>
 #include <glm\ext\matrix_transform.hpp>
 #include <glm\ext\matrix_clip_space.hpp>
@@ -13,9 +15,7 @@ namespace rub
 	{
 		recreateSwapChain();
 		createCommandBuffers();
-		createGlobalDescriptor();
-
-		cameraData = std::make_unique<CameraData>(device, rubSwapChain, globalDescriptor.globalSetLayout);
+		globalDescriptor = std::make_unique<GlobalDescriptor>(rubDevice, rubSwapChain);
 	}
 
 	void RubRenderer::createCommandBuffers()
@@ -109,11 +109,17 @@ namespace rub
 		glm::mat4 projection = glm::perspective(glm::radians(70.f), rubSwapChain->getExtentAspectRatio(), 0.1f, 200.0f);
 		projection[1][1] *= -1;
 
-		GPUCameraData gpuData{};
-		gpuData.view = view;
-		gpuData.projection = projection;
+		GlobalDescriptor::GPUCameraData cameraData{};
+		cameraData.view = view;
+		cameraData.projection = projection;
 
-		cameraData->updateBuffers(gpuData);
+		GlobalDescriptor::GPUSceneData sceneData{};
+		sceneData.ambientColor = glm::vec4(0.58f, 0.87f, 0.98f, 0);
+		sceneData.sunDirection = glm::vec4(0, 0.5f, 0.5f, 0);
+		sceneData.sunColor = glm::vec4(1.0f, 1.0f, 1.0f, 0);
+
+		globalDescriptor->updateCameraBuffer(cameraData);
+		globalDescriptor->updateSceneBuffer(sceneData);
 	}
 
 	void RubRenderer::endFrame()
@@ -181,30 +187,8 @@ namespace rub
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void RubRenderer::createGlobalDescriptor()
-	{
-		VkDescriptorSetLayoutBinding camBufferBinding = {};
-		camBufferBinding.binding = 0;
-		camBufferBinding.descriptorCount = 1;
-		camBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		camBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.pNext = nullptr;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.flags = 0;
-		layoutInfo.pBindings = &camBufferBinding;
-
-		if (vkCreateDescriptorSetLayout(rubDevice.getDevice(), &layoutInfo, nullptr, &globalDescriptor.globalSetLayout) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create descriptor set layout!");
-		}
-	}
-
 	RubRenderer::~RubRenderer()
 	{
 		freeCommandBuffers();
-		vkDestroyDescriptorSetLayout(rubDevice.getDevice(), globalDescriptor.globalSetLayout, nullptr);
 	}
 }

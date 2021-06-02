@@ -4,7 +4,7 @@
 #include "rub_device.hpp"
 #include "rub_swap_chain.hpp"
 
-#include "camera_data.hpp"
+#include "global_descriptor.hpp"
 
 #include <memory>
 #include <vector>
@@ -12,14 +12,6 @@
 
 namespace rub
 {
-	struct GlobalDescriptor
-	{
-		VkDescriptorSetLayout globalSetLayout;
-		VkDeviceMemory deviceMemory;
-		VkDeviceSize deviceSize;
-		void* mappedData;
-	};
-
 	class RubRenderer
 	{
 	public:
@@ -39,8 +31,7 @@ namespace rub
 		void beginRenderPass(VkCommandBuffer commandBuffer);
 		void endRenderPass(VkCommandBuffer commandBuffer);
 		//std::shared_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
-		GlobalDescriptor& getGlobalDescriptor() { return globalDescriptor; };
-		std::unique_ptr<CameraData>& getCameraData() { return cameraData; };
+		std::unique_ptr<GlobalDescriptor>& getGlobalDescriptor() { return globalDescriptor; };
 
 	private:
 		RubWindow& rubWindow;
@@ -51,8 +42,8 @@ namespace rub
 		bool isFrameStarted = false;
 		uint32_t currentImageIndex;
 		
-		GlobalDescriptor globalDescriptor;
-		std::unique_ptr<CameraData> cameraData;
+		//GlobalDescriptor globalDescriptor;
+		std::unique_ptr<GlobalDescriptor> globalDescriptor;
 
 		void createCommandBuffers();
 		void freeCommandBuffers();

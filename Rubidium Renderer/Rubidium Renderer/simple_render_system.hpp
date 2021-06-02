@@ -19,19 +19,18 @@ namespace rub
 	class SimpleRenderSystem
 	{
 	public:
-		SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, GlobalDescriptor& globalDescriptor);
+		SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
 		~SimpleRenderSystem();
 
-		void renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<CameraData>& cameraData);
+		void renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
 
 	private:
 		RubDevice& rubDevice;
-		GlobalDescriptor& globalDescriptor;
 
 		std::unique_ptr<RubPipeline> rubPipeline;
 		VkPipelineLayout pipelineLayout;
 
-		void createPipelineLayout();
+		void createPipelineLayout(VkDescriptorSetLayout& setLayout);
 		void createPipeline(VkRenderPass renderPass);
 
 		int frameNumber = 0;

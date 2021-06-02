@@ -23,7 +23,7 @@ namespace rub
 			if (commandBuffer != nullptr)
 			{
 				rubRenderer.beginRenderPass(commandBuffer);
-				renderSystem.renderModels(commandBuffer, gameObjects, rubRenderer.getCameraData());
+				renderSystem.renderModels(commandBuffer, gameObjects, rubRenderer.getGlobalDescriptor());
 				rubRenderer.endRenderPass(commandBuffer);
 				rubRenderer.endFrame();
 			}			
@@ -56,11 +56,12 @@ namespace rub
 
 		auto object = RubGameObject::createGameObject();
 		object.model = suzanne;
-		object.position = glm::vec3(-1, 0, 0);
+		object.position = glm::vec3(-1.5f, 0, 0);
 
 		auto object2 = RubGameObject::createGameObject();
 		object2.model = suzanne;
-		object2.position = glm::vec3(1, 0, 0);
+		object2.position = glm::vec3(1.5f, 0, 0);
+		object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
 
 		gameObjects.push_back(std::move(object));
 		gameObjects.push_back(std::move(object2));
