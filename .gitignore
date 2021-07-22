@@ -12,6 +12,9 @@
 *.o
 *.obj
 
+# Don't ignore OBJs in models
+!Rubidium Renderer/Rubidium Renderer/models/*.obj
+
 # Precompiled Headers
 *.gch
 *.pch
