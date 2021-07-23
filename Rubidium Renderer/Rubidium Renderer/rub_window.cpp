@@ -4,7 +4,7 @@
 
 namespace rub
 {
-	RubWindow::RubWindow(int width, int height, std::string name) : width{ width }, height{ height }, windowName{ name }
+	RubWindow::RubWindow(int width, int height, std::string name) : width{ width }, height{ height }, WINDOW_TITLE{ name }
 	{
 		initWindow();
 	}
@@ -16,7 +16,7 @@ namespace rub
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-		window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
+		window = glfwCreateWindow(width, height, WINDOW_TITLE.c_str(), nullptr, nullptr);
 		glfwSetWindowUserPointer(window, this);
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
@@ -35,6 +35,12 @@ namespace rub
 		rubWindow->framebufferResized = true;
 		rubWindow->width = width;
 		rubWindow->height = height;
+	}
+
+	void RubWindow::changeTitleSuffix(std::string suffix)
+	{
+		std::string title = WINDOW_TITLE + " - " + suffix;
+		glfwSetWindowTitle(window, title.c_str());
 	}
 
 	RubWindow::~RubWindow()

@@ -17,12 +17,13 @@ namespace rub
 		VkExtent2D getExtent() { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; };
 		bool wasWindowResized() { return framebufferResized; };
 		void resetWindowResizedFlag() { framebufferResized = false; };
+		void changeTitleSuffix(std::string suffix);
 
 	private:
 		int width;
 		int height;
 		bool framebufferResized = false;
-		std::string windowName;
+		const std::string WINDOW_TITLE;
 		GLFWwindow* window;
 
 		void initWindow();
