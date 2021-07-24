@@ -5,12 +5,12 @@
 
 namespace rub
 {
-	RubPipeline::RubPipeline(RubDevice& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : rubDevice{ device }
+	Pipeline::Pipeline(Device& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : rubDevice{ device }
 	{
 		createGraphicsPipeline(vertPath, fragPath, configInfo);
 	}
 
-	std::vector<char> RubPipeline::readFile(const std::string& filename)
+	std::vector<char> Pipeline::readFile(const std::string& filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -28,7 +28,7 @@ namespace rub
 		return buffer;
 	}
 
-	void RubPipeline::createGraphicsPipeline(const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo)
+	void Pipeline::createGraphicsPipeline(const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo)
 	{
 		auto vertShaderCode = readFile(vertPath);
 		auto fragShaderCode = readFile(fragPath);
@@ -52,8 +52,8 @@ namespace rub
 		shaderStages[1].pNext = nullptr;
 		shaderStages[1].pSpecializationInfo = nullptr;
 
-		auto bindingDescriptions = RubModel::Vertex::getBindingDescriptions();
-		auto attributeDescriptions = RubModel::Vertex::getAttributeDescriptions();
+		auto bindingDescriptions = Model::Vertex::getBindingDescriptions();
+		auto attributeDescriptions = Model::Vertex::getAttributeDescriptions();
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -99,7 +99,7 @@ namespace rub
 		}
 	}
 
-	void RubPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
+	void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
 	{
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -112,12 +112,12 @@ namespace rub
 		}
 	}
 
-	void RubPipeline::bind(VkCommandBuffer commandBuffer)
+	void Pipeline::bind(VkCommandBuffer commandBuffer)
 	{
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 	}
 
-	void RubPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
+	void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
 	{
 		configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -178,7 +178,7 @@ namespace rub
 		configInfo.dynamicStateInfo.flags = 0;
 	}
 
-	RubPipeline::~RubPipeline()
+	Pipeline::~Pipeline()
 	{
 		vkDestroyShaderModule(rubDevice.getDevice(), vertShaderModule, nullptr);
 		vkDestroyShaderModule(rubDevice.getDevice(), fragShaderModule, nullptr);

@@ -6,7 +6,7 @@
 
 namespace rub
 {
-	class RubGameObject
+	class RenderObject
 	{
 	public:
 		struct Material
@@ -15,10 +15,10 @@ namespace rub
 			glm::vec4 maskMap; //r: metallic, g: roughness
 		};
 
-		RubGameObject() {}
-		~RubGameObject() {}
+		RenderObject() {}
+		~RenderObject() {}
 
-		std::shared_ptr<RubModel> model{};
+		std::shared_ptr<Model> model{};
 		glm::vec3 position;
 		glm::vec3 rotation;
 		Material material;

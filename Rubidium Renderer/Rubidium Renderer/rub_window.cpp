@@ -4,12 +4,12 @@
 
 namespace rub
 {
-	RubWindow::RubWindow(int width, int height, std::string name) : width{ width }, height{ height }, WINDOW_TITLE{ name }
+	Window::Window(int width, int height, std::string name) : width{ width }, height{ height }, WINDOW_TITLE{ name }
 	{
 		initWindow();
 	}
 
-	void RubWindow::initWindow()
+	void Window::initWindow()
 	{
 		glfwInit();
 
@@ -21,7 +21,7 @@ namespace rub
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
-	void RubWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
+	void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 	{
 		if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS)
 		{
@@ -29,21 +29,21 @@ namespace rub
 		}
 	}
 
-	void RubWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
-		auto rubWindow = reinterpret_cast<RubWindow*>(glfwGetWindowUserPointer(window));
+		auto rubWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
 		rubWindow->framebufferResized = true;
 		rubWindow->width = width;
 		rubWindow->height = height;
 	}
 
-	void RubWindow::changeTitleSuffix(std::string suffix)
+	void Window::changeTitleSuffix(std::string suffix)
 	{
 		std::string title = WINDOW_TITLE + " - " + suffix;
 		glfwSetWindowTitle(window, title.c_str());
 	}
 
-	RubWindow::~RubWindow()
+	Window::~Window()
 	{
 		glfwDestroyWindow(window);
 		glfwTerminate();

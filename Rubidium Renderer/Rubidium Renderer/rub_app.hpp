@@ -4,7 +4,7 @@
 #include "rub_pipeline.hpp"
 #include "rub_device.hpp"
 #include "rub_swap_chain.hpp"
-#include "rub_game_object.hpp"
+#include "rub_render_object.hpp"
 #include "rub_renderer.hpp"
 
 #include <memory>
@@ -25,11 +25,11 @@ namespace rub
 		void run();
 
 	private:
-		RubWindow rubWindow{ WIDTH, HEIGHT, "Rubidium Renderer" };
-		RubDevice rubDevice{ rubWindow };
-		RubRenderer rubRenderer{ rubWindow, rubDevice };
+		Window window{ WIDTH, HEIGHT, "Rubidium Renderer" };
+		Device device{ window };
+		Renderer renderer{ window, device };
 
-		std::vector<RubGameObject> gameObjects;
+		std::vector<RenderObject> renderObjects;
 
 		void loadObjects();
 	};

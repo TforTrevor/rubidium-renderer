@@ -4,7 +4,7 @@
 
 namespace rub
 {
-	GlobalDescriptor::GlobalDescriptor(RubDevice& device, std::unique_ptr<RubSwapChain>& swapChain) : device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
+	GlobalDescriptor::GlobalDescriptor(Device& device, std::unique_ptr<SwapChain>& swapChain) : device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
 	{
 		globalDescriptors.resize(FRAME_COUNT);
 

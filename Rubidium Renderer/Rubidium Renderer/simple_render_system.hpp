@@ -2,7 +2,7 @@
 
 #include "rub_pipeline.hpp"
 #include "rub_device.hpp"
-#include "rub_game_object.hpp"
+#include "rub_render_object.hpp"
 #include "rub_swap_chain.hpp"
 #include "rub_renderer.hpp"
 
@@ -27,15 +27,15 @@ namespace rub
 	class SimpleRenderSystem
 	{
 	public:
-		SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<RubSwapChain>& swapChain);
+		SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain);
 		~SimpleRenderSystem();
 
-		void renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
+		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject> renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
 
 	private:
-		RubDevice& device;
+		Device& device;
 
-		std::unique_ptr<RubPipeline> rubPipeline;
+		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
 
 		VkDescriptorSetLayout objectSetLayout;

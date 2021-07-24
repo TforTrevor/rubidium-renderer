@@ -15,22 +15,22 @@ namespace rub
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ rubDevice, rubRenderer.getRenderPass(), rubRenderer.getGlobalDescriptor(), rubRenderer.getSwapChain() };
+		SimpleRenderSystem renderSystem{ device, renderer.getRenderPass(), renderer.getGlobalDescriptor(), renderer.getSwapChain() };
 
 		double lastTime = glfwGetTime();
 		int nbFrames = 0;
 
-		while (!rubWindow.shouldClose())
+		while (!window.shouldClose())
 		{
 			glfwPollEvents();
 
-			auto commandBuffer = rubRenderer.beginFrame();
+			auto commandBuffer = renderer.beginFrame();
 			if (commandBuffer != nullptr)
 			{
-				rubRenderer.beginRenderPass(commandBuffer);
-				renderSystem.renderModels(commandBuffer, gameObjects, rubRenderer.getGlobalDescriptor());
-				rubRenderer.endRenderPass(commandBuffer);
-				rubRenderer.endFrame();
+				renderer.beginRenderPass(commandBuffer);
+				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor());
+				renderer.endRenderPass(commandBuffer);
+				renderer.endFrame();
 			}
 
 			double currentTime = glfwGetTime();
@@ -41,48 +41,48 @@ namespace rub
 				//printf("%f ms/frame\n", 1000.0 / double(nbFrames));
 				std::stringstream suffix;
 				suffix << std::fixed << std::setprecision(3) << 1000.0 / double(nbFrames) << "ms";
-				rubWindow.changeTitleSuffix(suffix.str());
+				window.changeTitleSuffix(suffix.str());
 
 				nbFrames = 0;
 				lastTime += 1.0;				
 			}
 		}
 
-		vkDeviceWaitIdle(rubDevice.getDevice());
+		vkDeviceWaitIdle(device.getDevice());
 	}
 
 	void RubApp::loadObjects()
 	{
-		std::shared_ptr<RubModel> suzanne = std::make_shared<RubModel>(rubDevice, "models/suzanne_2.obj");
-		std::shared_ptr<RubModel> triangle = std::make_shared<RubModel>(rubDevice, "models/triangle.obj");
-		std::shared_ptr<RubModel> cube = std::make_shared<RubModel>(rubDevice, "models/cube.obj");
+		std::shared_ptr<Model> suzanne = std::make_shared<Model>(device, "models/suzanne_2.obj");
+		std::shared_ptr<Model> triangle = std::make_shared<Model>(device, "models/triangle.obj");
+		std::shared_ptr<Model> cube = std::make_shared<Model>(device, "models/cube.obj");
 
-		RubGameObject object{};
+		RenderObject object{};
 		object.model = suzanne;
 		object.position = glm::vec3(-1.5f, 0, 0);
 		object.rotation = glm::vec3(0, glm::radians(0.0f), 0);
-		object.material = RubGameObject::Material{ glm::vec4(1.0f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
+		object.material = RenderObject::Material{ glm::vec4(1.0f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		RubGameObject object2{};
+		RenderObject object2{};
 		object2.model = suzanne;
 		object2.position = glm::vec3(1.5f, 0, 0);
 		object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object2.material = RubGameObject::Material{ glm::vec4(1.0f, 0.5f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
+		object2.material = RenderObject::Material{ glm::vec4(1.0f, 0.5f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
 
-		RubGameObject object3{};
+		RenderObject object3{};
 		object3.model = cube;
 		object3.position = glm::vec3(-1.5f, 0, 0);
 		object3.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object3.material = RubGameObject::Material{ glm::vec4(1.0f, 1.0f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
+		object3.material = RenderObject::Material{ glm::vec4(1.0f, 1.0f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
 
-		RubGameObject object4{};
+		RenderObject object4{};
 		object4.model = cube;
 		object4.position = glm::vec3(1.5f, 0, 0);
 		object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object4.material = RubGameObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
+		object4.material = RenderObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		gameObjects.push_back(std::move(object));
-		gameObjects.push_back(std::move(object2));
+		renderObjects.push_back(std::move(object));
+		renderObjects.push_back(std::move(object2));
 		//gameObjects.push_back(std::move(object3));
 		//gameObjects.push_back(std::move(object4));
 

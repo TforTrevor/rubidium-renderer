@@ -254,7 +254,7 @@
     <ClInclude Include="global_descriptor.hpp" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_device.hpp" />
-    <ClInclude Include="rub_game_object.hpp" />
+    <ClInclude Include="rub_render_object.hpp" />
     <ClInclude Include="rub_model.hpp" />
     <ClInclude Include="rub_pipeline.hpp" />
     <ClInclude Include="rub_renderer.hpp" />

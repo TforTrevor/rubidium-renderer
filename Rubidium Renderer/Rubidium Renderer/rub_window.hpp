@@ -7,11 +7,11 @@
 
 namespace rub
 {
-	class RubWindow
+	class Window
 	{
 	public:
-		RubWindow(int width, int height, std::string name);
-		~RubWindow();
+		Window(int width, int height, std::string name);
+		~Window();
 		bool shouldClose() { return glfwWindowShouldClose(window); }
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		VkExtent2D getExtent() { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; };

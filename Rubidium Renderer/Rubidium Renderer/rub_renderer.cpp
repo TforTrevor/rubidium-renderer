@@ -11,54 +11,54 @@
 
 namespace rub
 {
-	RubRenderer::RubRenderer(RubWindow& window, RubDevice& device) : rubWindow{ window }, rubDevice{ device }
+	Renderer::Renderer(Window& window, Device& device) : window{ window }, device{ device }
 	{
 		recreateSwapChain();
 		createCommandBuffers();
-		globalDescriptor = std::make_unique<GlobalDescriptor>(rubDevice, rubSwapChain);
+		globalDescriptor = std::make_unique<GlobalDescriptor>(device, swapChain);
 	}
 
-	void RubRenderer::createCommandBuffers()
+	void Renderer::createCommandBuffers()
 	{
-		commandBuffers.resize(rubSwapChain->imageCount());
+		commandBuffers.resize(swapChain->imageCount());
 
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = rubDevice.getCommandPool();
+		allocInfo.commandPool = device.getCommandPool();
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-		if (vkAllocateCommandBuffers(rubDevice.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		if (vkAllocateCommandBuffers(device.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to allocate command buffers!");
 		}
 	}
 
-	void RubRenderer::freeCommandBuffers()
+	void Renderer::freeCommandBuffers()
 	{
-		vkFreeCommandBuffers(rubDevice.getDevice(), rubDevice.getCommandPool(), static_cast<float>(commandBuffers.size()), commandBuffers.data());
+		vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), static_cast<float>(commandBuffers.size()), commandBuffers.data());
 		commandBuffers.clear();
 	}
 
-	void RubRenderer::recreateSwapChain()
+	void Renderer::recreateSwapChain()
 	{
-		auto extent = rubWindow.getExtent();
+		auto extent = window.getExtent();
 		while (extent.width == 0 || extent.height == 0)
 		{
-			extent = rubWindow.getExtent();
+			extent = window.getExtent();
 			glfwWaitEvents();
 		}
 
-		vkDeviceWaitIdle(rubDevice.getDevice());
-		rubSwapChain.reset();
-		if (rubSwapChain == nullptr)
+		vkDeviceWaitIdle(device.getDevice());
+		swapChain.reset();
+		if (swapChain == nullptr)
 		{
-			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent);
+			swapChain = std::make_unique<SwapChain>(device, extent);
 		}
 		else
 		{
-			rubSwapChain = std::make_unique<RubSwapChain>(rubDevice, extent, std::move(rubSwapChain));
-			if (rubSwapChain->imageCount() != commandBuffers.size())
+			swapChain = std::make_unique<SwapChain>(device, extent, std::move(swapChain));
+			if (swapChain->imageCount() != commandBuffers.size())
 			{
 				freeCommandBuffers();
 				createCommandBuffers();
@@ -66,11 +66,11 @@ namespace rub
 		}
 	}
 
-	VkCommandBuffer RubRenderer::beginFrame()
+	VkCommandBuffer Renderer::beginFrame()
 	{
 		assert(!isFrameStarted && "can't call beginFrame while frame is in progress");
 
-		auto result = rubSwapChain->acquireNextImage(&currentImageIndex);
+		auto result = swapChain->acquireNextImage(&currentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -99,14 +99,14 @@ namespace rub
 		return commandBuffer;
 	}
 
-	void RubRenderer::updateCamera()
+	void Renderer::updateCamera()
 	{
 		//camera position
 		glm::vec3 camPos = { 0.0f, 0.0f, -3.0f };
 
 		glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
 		//camera projection
-		glm::mat4 projection = glm::perspective(glm::radians(70.f), rubSwapChain->getExtentAspectRatio(), 0.1f, 200.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(70.f), swapChain->getExtentAspectRatio(), 0.1f, 200.0f);
 		projection[1][1] *= -1;
 
 		GlobalDescriptor::GPUCameraData cameraData{};
@@ -132,7 +132,7 @@ namespace rub
 		globalDescriptor->updateLightBuffer(lightData);
 	}
 
-	void RubRenderer::endFrame()
+	void Renderer::endFrame()
 	{
 		assert(isFrameStarted && "can't call endFrame while frame isn't in progress");
 
@@ -142,10 +142,10 @@ namespace rub
 			throw std::runtime_error("failed to record command buffer!");
 		}
 
-		auto result = rubSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || rubWindow.wasWindowResized())
+		auto result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
 		{
-			rubWindow.resetWindowResizedFlag();
+			window.resetWindowResizedFlag();
 			recreateSwapChain();
 		}
 		else if (result != VK_SUCCESS)
@@ -156,18 +156,18 @@ namespace rub
 		isFrameStarted = false;
 	}
 
-	void RubRenderer::beginRenderPass(VkCommandBuffer commandBuffer)
+	void Renderer::beginRenderPass(VkCommandBuffer commandBuffer)
 	{
 		assert(isFrameStarted && "can't call beginRenderPass if frame isn't in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() && "can't end render pass on command buffer from a different frame");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = rubSwapChain->getRenderPass();
-		renderPassInfo.framebuffer = rubSwapChain->getFrameBuffer(currentImageIndex);
+		renderPassInfo.renderPass = swapChain->getRenderPass();
+		renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
 
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = rubSwapChain->getSwapChainExtent();
+		renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
 		std::array<VkClearValue, 2> clearValues{};
 		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -180,16 +180,16 @@ namespace rub
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(rubSwapChain->getSwapChainExtent().width);
-		viewport.height = static_cast<float>(rubSwapChain->getSwapChainExtent().height);
+		viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
+		viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		VkRect2D scissor{ {0, 0}, rubSwapChain->getSwapChainExtent() };
+		VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
-	void RubRenderer::endRenderPass(VkCommandBuffer commandBuffer)
+	void Renderer::endRenderPass(VkCommandBuffer commandBuffer)
 	{
 		assert(isFrameStarted && "can't call endRenderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() && "can't end render pass on command buffer from a different frame");
@@ -197,7 +197,7 @@ namespace rub
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	RubRenderer::~RubRenderer()
+	Renderer::~Renderer()
 	{
 		freeCommandBuffers();
 	}

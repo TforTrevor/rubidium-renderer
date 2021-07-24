@@ -30,7 +30,7 @@ namespace rub
 			glm::vec4 lightColors[4];
 		};
 
-		GlobalDescriptor(RubDevice& device, std::unique_ptr<RubSwapChain>& swapChain);
+		GlobalDescriptor(Device& device, std::unique_ptr<SwapChain>& swapChain);
 		~GlobalDescriptor();
 
 		void updateCameraBuffer(GPUCameraData camera);
@@ -40,7 +40,7 @@ namespace rub
 		VkDescriptorSetLayout getLayout() { return setLayout; };
 
 	private:
-		RubDevice& device;
+		Device& device;
 
 		VkDescriptorSetLayout setLayout;
 		AllocatedBuffer cameraBuffer;

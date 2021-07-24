@@ -13,7 +13,7 @@
 
 namespace rub
 {
-	class RubModel
+	class Model
 	{
 	public:
 
@@ -33,14 +33,14 @@ namespace rub
 			}
 		};
 
-		RubModel(RubDevice& rubDevice, const std::string modelPath);
-		~RubModel();
+		Model(Device& rubDevice, const std::string modelPath);
+		~Model();
 
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer, uint32_t firstInstance);
 
 	private:
-		RubDevice& rubDevice;
+		Device& device;
 
 		AllocatedBuffer vertexBuffer;
 		uint32_t vertexCount;
@@ -56,9 +56,9 @@ namespace rub
 
 namespace std
 {
-	template<> struct hash<rub::RubModel::Vertex>
+	template<> struct hash<rub::Model::Vertex>
 	{
-		size_t operator()(rub::RubModel::Vertex const& vertex) const
+		size_t operator()(rub::Model::Vertex const& vertex) const
 		{
 			//return 1;
 			return ((hash<glm::vec3>()(vertex.position) ^

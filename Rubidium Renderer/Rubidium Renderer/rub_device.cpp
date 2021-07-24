@@ -50,7 +50,7 @@ namespace rub
 	}
 
 	//class member functions
-	RubDevice::RubDevice(RubWindow& window) : window{ window }
+	Device::Device(Window& window) : window{ window }
 	{
 		createInstance();
 		setupDebugMessenger();
@@ -62,7 +62,7 @@ namespace rub
 		createDescriptorPool();
 	}
 
-	void RubDevice::createInstance()
+	void Device::createInstance()
 	{
 		if (enableValidationLayers && !checkValidationLayerSupport())
 		{
@@ -108,12 +108,12 @@ namespace rub
 		hasGflwRequiredInstanceExtensions();
 	}
 
-	void RubDevice::createSurface()
+	void Device::createSurface()
 	{
 		window.createWindowSurface(instance, &surface);
 	}
 
-	void RubDevice::pickPhysicalDevice()
+	void Device::pickPhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -146,7 +146,7 @@ namespace rub
 		}
 	}
 
-	void RubDevice::createLogicalDevice()
+	void Device::createLogicalDevice()
 	{
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
@@ -196,7 +196,7 @@ namespace rub
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 	}
 
-	void RubDevice::createCommandPool()
+	void Device::createCommandPool()
 	{
 		QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
@@ -211,7 +211,7 @@ namespace rub
 		}
 	}
 
-	bool RubDevice::isDeviceSuitable(VkPhysicalDevice device)
+	bool Device::isDeviceSuitable(VkPhysicalDevice device)
 	{
 		/*VkPhysicalDeviceProperties deviceProperties;
 		VkPhysicalDeviceFeatures deviceFeatures;
@@ -231,7 +231,7 @@ namespace rub
 		return indices.isComplete() && extensionsSupported && swapChainAdequate;
 	}
 
-	void RubDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+	void Device::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 	{
 		createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -244,7 +244,7 @@ namespace rub
 		createInfo.pUserData = nullptr;  // Optional
 	}
 
-	void RubDevice::setupDebugMessenger()
+	void Device::setupDebugMessenger()
 	{
 		if (!enableValidationLayers) return;
 
@@ -256,7 +256,7 @@ namespace rub
 		}
 	}
 
-	bool RubDevice::checkValidationLayerSupport()
+	bool Device::checkValidationLayerSupport()
 	{
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -286,7 +286,7 @@ namespace rub
 		return true;
 	}
 
-	QueueFamilyIndices RubDevice::findQueueFamilies(VkPhysicalDevice device)
+	QueueFamilyIndices Device::findQueueFamilies(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices;
 
@@ -323,7 +323,7 @@ namespace rub
 		return indices;
 	}
 
-	std::vector<const char*> RubDevice::getRequiredExtensions()
+	std::vector<const char*> Device::getRequiredExtensions()
 	{
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
@@ -340,7 +340,7 @@ namespace rub
 	}
 
 
-	void RubDevice::hasGflwRequiredInstanceExtensions()
+	void Device::hasGflwRequiredInstanceExtensions()
 	{
 		uint32_t extensionCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -367,7 +367,7 @@ namespace rub
 		}
 	}
 
-	bool RubDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
+	bool Device::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	{
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -385,7 +385,7 @@ namespace rub
 		return requiredExtensions.empty();
 	}
 
-	SwapChainSupportDetails RubDevice::querySwapChainSupport(VkPhysicalDevice device)
+	SwapChainSupportDetails Device::querySwapChainSupport(VkPhysicalDevice device)
 	{
 		SwapChainSupportDetails details;
 
@@ -412,7 +412,7 @@ namespace rub
 		return details;
 	}
 
-	uint32_t RubDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+	uint32_t Device::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 	{
 		VkPhysicalDeviceMemoryProperties memProperties;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -429,7 +429,7 @@ namespace rub
 	}
 
 
-	VkFormat RubDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	VkFormat Device::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates)
 		{
@@ -449,7 +449,7 @@ namespace rub
 	}
 
 
-	void RubDevice::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 	{
 		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
 		{
@@ -475,7 +475,7 @@ namespace rub
 		}
 	}
 
-	void RubDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer)
+	void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer)
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -492,7 +492,7 @@ namespace rub
 		}
 	}
 
-	void RubDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+	void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -526,7 +526,7 @@ namespace rub
 		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 	}
 
-	void RubDevice::createDescriptorPool()
+	void Device::createDescriptorPool()
 	{
 		//create a descriptor pool that will hold 10 uniform buffers
 		std::vector<VkDescriptorPoolSize> sizes =
@@ -546,7 +546,7 @@ namespace rub
 		vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
 	}
 
-	void RubDevice::getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet)
+	void Device::getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet)
 	{
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.pNext = nullptr;
@@ -558,7 +558,7 @@ namespace rub
 		vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
 	}
 
-	void RubDevice::createAllocator()
+	void Device::createAllocator()
 	{
 		VmaAllocatorCreateInfo allocatorInfo = {};
 		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
@@ -569,7 +569,7 @@ namespace rub
 		vmaCreateAllocator(&allocatorInfo, &allocator);
 	}
 
-	size_t RubDevice::padUniformBufferSize(size_t originalSize)
+	size_t Device::padUniformBufferSize(size_t originalSize)
 	{
 		// Calculate required alignment based on minimum device offset alignment
 		size_t minUboAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
@@ -581,7 +581,7 @@ namespace rub
 		return alignedSize;
 	}
 
-	RubDevice::~RubDevice()
+	Device::~Device()
 	{
 		vmaDestroyAllocator(allocator);
 		vkDestroyCommandPool(device, commandPool, nullptr);

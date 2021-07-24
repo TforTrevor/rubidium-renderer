@@ -30,7 +30,7 @@ namespace rub
 		bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
 	};
 
-	class RubDevice
+	class Device
 	{
 	public:
 #ifdef NDEBUG
@@ -39,8 +39,8 @@ namespace rub
 		const bool enableValidationLayers = true;
 #endif
 
-		RubDevice(RubWindow& window);
-		~RubDevice();
+		Device(Window& window);
+		~Device();
 
 		VkCommandPool getCommandPool() { return commandPool; }
 		VkDevice getDevice() { return device; }
@@ -64,7 +64,7 @@ namespace rub
 		VkInstance instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-		RubWindow& window;
+		Window& window;
 
 		VkDevice device;
 		VkSurfaceKHR surface;

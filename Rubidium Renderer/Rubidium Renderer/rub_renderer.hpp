@@ -12,13 +12,13 @@
 
 namespace rub
 {
-	class RubRenderer
+	class Renderer
 	{
 	public:
-		RubRenderer(RubWindow& window, RubDevice& device);
-		~RubRenderer();
+		Renderer(Window& window, Device& device);
+		~Renderer();
 
-		VkRenderPass getRenderPass() const { return rubSwapChain->getRenderPass(); }
+		VkRenderPass getRenderPass() const { return swapChain->getRenderPass(); }
 		bool isFrameInProgress() const { return isFrameStarted; }
 		VkCommandBuffer getCurrentCommandBuffer()
 		{
@@ -30,14 +30,14 @@ namespace rub
 		void endFrame();
 		void beginRenderPass(VkCommandBuffer commandBuffer);
 		void endRenderPass(VkCommandBuffer commandBuffer);
-		std::unique_ptr<RubSwapChain>& getSwapChain() { return rubSwapChain; };
+		std::unique_ptr<SwapChain>& getSwapChain() { return swapChain; };
 		std::unique_ptr<GlobalDescriptor>& getGlobalDescriptor() { return globalDescriptor; };
 
 	private:
-		RubWindow& rubWindow;
-		RubDevice& rubDevice;
+		Window& window;
+		Device& device;
 
-		std::unique_ptr<RubSwapChain> rubSwapChain;
+		std::unique_ptr<SwapChain> swapChain;
 		std::vector<VkCommandBuffer> commandBuffers;
 		bool isFrameStarted = false;
 		uint32_t currentImageIndex;

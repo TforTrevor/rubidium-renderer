@@ -10,12 +10,12 @@
 
 namespace rub
 {
-	RubModel::RubModel(RubDevice& device, const std::string modelPath) : rubDevice{ device }
+	Model::Model(Device& device, const std::string modelPath) : device{ device }
 	{
 		loadOBJ(modelPath);
 	}
 
-	void RubModel::loadOBJ(const std::string modelPath)
+	void Model::loadOBJ(const std::string modelPath)
 	{
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -81,49 +81,49 @@ namespace rub
 		std::cout << "Index count: " << indices.size() << std::endl;
 	}
 
-	void RubModel::createVertexBuffer(const std::vector<Vertex>& vertices)
+	void Model::createVertexBuffer(const std::vector<Vertex>& vertices)
 	{
 		vertexCount = static_cast<uint32_t>(vertices.size());
 		assert(vertexCount >= 3 && "Vertex count must be at least 3");
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * vertexCount;
 
 		AllocatedBuffer stagingBuffer;
-		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
+		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
 
 		void* data;
-		vmaMapMemory(rubDevice.getAllocator(), stagingBuffer.allocation, &data);
+		vmaMapMemory(device.getAllocator(), stagingBuffer.allocation, &data);
 		memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-		vmaUnmapMemory(rubDevice.getAllocator(), stagingBuffer.allocation);
+		vmaUnmapMemory(device.getAllocator(), stagingBuffer.allocation);
 
-		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, vertexBuffer);
+		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, vertexBuffer);
 
-		rubDevice.copyBuffer(stagingBuffer.buffer, vertexBuffer.buffer, bufferSize);
+		device.copyBuffer(stagingBuffer.buffer, vertexBuffer.buffer, bufferSize);
 
-		vmaDestroyBuffer(rubDevice.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	}
 
-	void RubModel::createIndexBuffer(const std::vector<uint32_t>& indices)
+	void Model::createIndexBuffer(const std::vector<uint32_t>& indices)
 	{
 		indexCount = static_cast<uint32_t>(indices.size());
 		assert(indexCount >= 3 && "Vertex count must be at least 3");
 		VkDeviceSize bufferSize = sizeof(indices[0]) * indexCount;
 
 		AllocatedBuffer stagingBuffer;
-		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
+		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
 
 		void* data;
-		vmaMapMemory(rubDevice.getAllocator(), stagingBuffer.allocation, &data);
+		vmaMapMemory(device.getAllocator(), stagingBuffer.allocation, &data);
 		memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-		vmaUnmapMemory(rubDevice.getAllocator(), stagingBuffer.allocation);
+		vmaUnmapMemory(device.getAllocator(), stagingBuffer.allocation);
 
-		rubDevice.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, indexBuffer);
+		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, indexBuffer);
 
-		rubDevice.copyBuffer(stagingBuffer.buffer, indexBuffer.buffer, bufferSize);
+		device.copyBuffer(stagingBuffer.buffer, indexBuffer.buffer, bufferSize);
 
-		vmaDestroyBuffer(rubDevice.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	}
 
-	void RubModel::bind(VkCommandBuffer commandBuffer)
+	void Model::bind(VkCommandBuffer commandBuffer)
 	{
 		VkBuffer buffers[] = { vertexBuffer.buffer };
 		VkDeviceSize offsets[] = { 0 };
@@ -131,13 +131,13 @@ namespace rub
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 	}
 
-	void RubModel::draw(VkCommandBuffer commandBuffer, uint32_t firstInstance)
+	void Model::draw(VkCommandBuffer commandBuffer, uint32_t firstInstance)
 	{
 		//vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
 		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, firstInstance);
 	}
 
-	std::vector<VkVertexInputBindingDescription> RubModel::Vertex::getBindingDescriptions()
+	std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions()
 	{
 		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
 
@@ -148,7 +148,7 @@ namespace rub
 		return bindingDescriptions;
 	}
 
-	std::vector<VkVertexInputAttributeDescription> RubModel::Vertex::getAttributeDescriptions()
+	std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions()
 	{
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions(4);
 
@@ -175,9 +175,9 @@ namespace rub
 		return attributeDescriptions;
 	}
 
-	RubModel::~RubModel()
+	Model::~Model()
 	{
-		vmaDestroyBuffer(rubDevice.getAllocator(), vertexBuffer.buffer, vertexBuffer.allocation);
-		vmaDestroyBuffer(rubDevice.getAllocator(), indexBuffer.buffer, indexBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), vertexBuffer.buffer, vertexBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), indexBuffer.buffer, indexBuffer.allocation);
 	}
 }

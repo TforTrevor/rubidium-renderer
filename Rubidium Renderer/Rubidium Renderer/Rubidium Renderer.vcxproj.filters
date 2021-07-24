@@ -77,7 +77,7 @@
     <ClInclude Include="simple_render_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="rub_game_object.hpp">
+    <ClInclude Include="rub_render_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vk_util.hpp">

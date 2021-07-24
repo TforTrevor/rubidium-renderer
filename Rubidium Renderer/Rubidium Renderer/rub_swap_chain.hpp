@@ -6,14 +6,14 @@
 
 namespace rub
 {
-	class RubSwapChain
+	class SwapChain
 	{
 	public:
 		static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
-		RubSwapChain(RubDevice& deviceRef, VkExtent2D windowExtent);
-		RubSwapChain(RubDevice& deviceRef, VkExtent2D windowExtent, std::shared_ptr<RubSwapChain> previous);
-		~RubSwapChain();
+		SwapChain(Device& deviceRef, VkExtent2D windowExtent);
+		SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+		~SwapChain();
 
 		VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
 		VkRenderPass getRenderPass() { return renderPass; }
@@ -43,11 +43,11 @@ namespace rub
 		std::vector<VkImage> swapChainImages;
 		std::vector<VkImageView> swapChainImageViews;
 
-		RubDevice& device;
+		Device& device;
 		VkExtent2D windowExtent;
 
 		VkSwapchainKHR swapChain;
-		std::shared_ptr<RubSwapChain> oldSwapChain;
+		std::shared_ptr<SwapChain> oldSwapChain;
 
 		std::vector<VkSemaphore> imageAvailableSemaphores;
 		std::vector<VkSemaphore> renderFinishedSemaphores;

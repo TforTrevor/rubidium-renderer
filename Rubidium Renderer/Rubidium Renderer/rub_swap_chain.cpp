@@ -10,12 +10,12 @@
 
 namespace rub
 {
-	RubSwapChain::RubSwapChain(RubDevice& deviceRef, VkExtent2D extent) : device{ deviceRef }, windowExtent{ extent } 
+	SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent) : device{ deviceRef }, windowExtent{ extent } 
 	{
 		init();
 	}
 
-	RubSwapChain::RubSwapChain(RubDevice& deviceRef, VkExtent2D extent, std::shared_ptr<RubSwapChain> previous) : device{ deviceRef }, windowExtent{ extent }, oldSwapChain{ previous }
+	SwapChain::SwapChain(Device& deviceRef, VkExtent2D extent, std::shared_ptr<SwapChain> previous) : device{ deviceRef }, windowExtent{ extent }, oldSwapChain{ previous }
 	{
 		init();
 
@@ -23,7 +23,7 @@ namespace rub
 		oldSwapChain = nullptr;
 	}
 
-	void RubSwapChain::init()
+	void SwapChain::init()
 	{
 		createSwapChain();
 		createImageViews();
@@ -33,7 +33,7 @@ namespace rub
 		createSyncObjects();
 	}
 
-	void RubSwapChain::createSwapChain()
+	void SwapChain::createSwapChain()
 	{
 		SwapChainSupportDetails swapChainSupport = device.getSwapChainSupport();
 
@@ -100,7 +100,7 @@ namespace rub
 		swapChainExtent = extent;
 	}
 
-	void RubSwapChain::createImageViews()
+	void SwapChain::createImageViews()
 	{
 		swapChainImageViews.resize(swapChainImages.size());
 		for (size_t i = 0; i < swapChainImages.size(); i++)
@@ -124,7 +124,7 @@ namespace rub
 		}
 	}
 
-	void RubSwapChain::createDepthResources()
+	void SwapChain::createDepthResources()
 	{
 		VkFormat depthFormat = findDepthFormat();
 		VkExtent2D swapChainExtent = getSwapChainExtent();
@@ -171,7 +171,7 @@ namespace rub
 		}
 	}
 
-	void RubSwapChain::createRenderPass()
+	void SwapChain::createRenderPass()
 	{
 		VkAttachmentDescription depthAttachment{};
 		depthAttachment.format = findDepthFormat();
@@ -231,7 +231,7 @@ namespace rub
 		}
 	}
 
-	void RubSwapChain::createFramebuffers()
+	void SwapChain::createFramebuffers()
 	{
 		swapChainFramebuffers.resize(imageCount());
 		for (size_t i = 0; i < imageCount(); i++)
@@ -259,7 +259,7 @@ namespace rub
 		}
 	}
 
-	void RubSwapChain::createSyncObjects()
+	void SwapChain::createSyncObjects()
 	{
 		imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 		renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -286,7 +286,7 @@ namespace rub
 		}
 	}
 
-	VkSurfaceFormatKHR RubSwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 	{
 		for (const auto& availableFormat : availableFormats)
 		{
@@ -300,7 +300,7 @@ namespace rub
 	}
 
 
-	VkPresentModeKHR RubSwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+	VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 	{
 		//for (const auto& availablePresentMode : availablePresentModes)
 		//{
@@ -322,7 +322,7 @@ namespace rub
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
 
-	VkExtent2D RubSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+	VkExtent2D SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 	{
 		if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 		{
@@ -338,7 +338,7 @@ namespace rub
 		}
 	}
 
-	VkFormat RubSwapChain::findDepthFormat()
+	VkFormat SwapChain::findDepthFormat()
 	{
 		return device.findSupportedFormat(
 			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -346,7 +346,7 @@ namespace rub
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
 
-	VkResult RubSwapChain::acquireNextImage(uint32_t* imageIndex)
+	VkResult SwapChain::acquireNextImage(uint32_t* imageIndex)
 	{
 		vkWaitForFences(device.getDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
@@ -355,7 +355,7 @@ namespace rub
 		return result;
 	}
 
-	VkResult RubSwapChain::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex)
+	VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex)
 	{
 		if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 		{
@@ -404,7 +404,7 @@ namespace rub
 		return result;
 	}
 	
-	RubSwapChain::~RubSwapChain()
+	SwapChain::~SwapChain()
 	{
 		for (auto imageView : swapChainImageViews)
 		{

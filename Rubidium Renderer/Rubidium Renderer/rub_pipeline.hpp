@@ -25,18 +25,18 @@ namespace rub
 		uint32_t subpass = 0;
 	};
 
-	class RubPipeline
+	class Pipeline
 	{
 	public:
-		RubPipeline(RubDevice& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
-		~RubPipeline();
+		Pipeline(Device& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
+		~Pipeline();
 
 		void bind(VkCommandBuffer commandBuffer);
 
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
 
 	private:
-		RubDevice& rubDevice;
+		Device& rubDevice;
 		VkPipeline graphicsPipeline;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;

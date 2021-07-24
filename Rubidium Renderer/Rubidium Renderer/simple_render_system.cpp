@@ -11,7 +11,7 @@
 
 namespace rub
 {
-	SimpleRenderSystem::SimpleRenderSystem(RubDevice& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<RubSwapChain>& swapChain) 
+	SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain) 
 		: device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
 	{
 		VkDescriptorSetLayout setLayout = globalDescriptor->getLayout();
@@ -84,25 +84,25 @@ namespace rub
 		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 		PipelineConfigInfo pipelineConfig{};
-		RubPipeline::defaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::defaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
 		pipelineConfig.pipelineLayout = pipelineLayout;
-		rubPipeline = std::make_unique<RubPipeline>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
+		pipeline = std::make_unique<Pipeline>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
 	}
 
-	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RubGameObject> gameObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor)
+	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject> renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor)
 	{
-		rubPipeline->bind(commandBuffer);
+		pipeline->bind(commandBuffer);
 		globalDescriptor->bind(commandBuffer, pipelineLayout);
 
 		void* objectData;
 		vmaMapMemory(device.getAllocator(), objectBuffers[frameIndex % FRAME_COUNT].allocation, &objectData);
 		GPUObjectData* objectSSBO = (GPUObjectData*)objectData;
 
-		for (int i = 0; i < gameObjects.size(); i++)
+		for (int i = 0; i < renderObjects.size(); i++)
 		{
-			auto object = gameObjects[i];
+			auto object = renderObjects[i];
 
 			glm::mat4 model = glm::translate(glm::mat4{ 1.0f }, object.position);
 			model *= glm::eulerAngleXYZ(object.rotation.x, object.rotation.y, object.rotation.z);
@@ -117,9 +117,9 @@ namespace rub
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
 
-		for (int i = 0; i < gameObjects.size(); i++)
+		for (int i = 0; i < renderObjects.size(); i++)
 		{
-			auto object = gameObjects[i];
+			auto object = renderObjects[i];
 
 			object.model->bind(commandBuffer);
 			object.model->draw(commandBuffer, i);
