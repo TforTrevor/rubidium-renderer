@@ -53,33 +53,48 @@ namespace rub
 
 	void RubApp::loadObjects()
 	{
-		//std::shared_ptr<RubModel> suzanne = std::make_shared<RubModel>(rubDevice, "models/suzanne_2.obj");
+		std::shared_ptr<RubModel> suzanne = std::make_shared<RubModel>(rubDevice, "models/suzanne_2.obj");
 		std::shared_ptr<RubModel> triangle = std::make_shared<RubModel>(rubDevice, "models/triangle.obj");
+		std::shared_ptr<RubModel> cube = std::make_shared<RubModel>(rubDevice, "models/cube.obj");
 
-		//RubGameObject object{};
-		//object.model = suzanne;
-		//object.position = glm::vec3(-1.5f, 0, 0);
-		//object.rotation = glm::vec3(0, glm::radians(0.0f), 0);
-		//object.material = RubGameObject::Material{ glm::vec4(1.0f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
+		RubGameObject object{};
+		object.model = suzanne;
+		object.position = glm::vec3(-1.5f, 0, 0);
+		object.rotation = glm::vec3(0, glm::radians(0.0f), 0);
+		object.material = RubGameObject::Material{ glm::vec4(1.0f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		//RubGameObject object2{};
-		//object2.model = suzanne;
-		//object2.position = glm::vec3(1.5f, 0, 0);
-		//object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		//object2.material = RubGameObject::Material{ glm::vec4(1.0f, 0.5f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
+		RubGameObject object2{};
+		object2.model = suzanne;
+		object2.position = glm::vec3(1.5f, 0, 0);
+		object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		object2.material = RubGameObject::Material{ glm::vec4(1.0f, 0.5f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
 
-		//gameObjects.push_back(std::move(object));
-		//gameObjects.push_back(std::move(object2));
+		RubGameObject object3{};
+		object3.model = cube;
+		object3.position = glm::vec3(-1.5f, 0, 0);
+		object3.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		object3.material = RubGameObject::Material{ glm::vec4(1.0f, 1.0f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
 
-		int objectCount = 10000;
+		RubGameObject object4{};
+		object4.model = cube;
+		object4.position = glm::vec3(1.5f, 0, 0);
+		object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		object4.material = RubGameObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		for (int i = 0; i < objectCount; i++)
-		{
-			RubGameObject obj{};
-			obj.model = triangle;
-			obj.position = glm::vec3(0, -1, 0);
-			gameObjects.push_back(std::move(obj));
-		}
+		gameObjects.push_back(std::move(object));
+		gameObjects.push_back(std::move(object2));
+		//gameObjects.push_back(std::move(object3));
+		//gameObjects.push_back(std::move(object4));
+
+		//int objectCount = 10000;
+
+		//for (int i = 0; i < objectCount; i++)
+		//{
+		//	RubGameObject obj{};
+		//	obj.model = triangle;
+		//	obj.position = glm::vec3(0, -1, 0);
+		//	gameObjects.push_back(std::move(obj));
+		//}
 	}
 
 	RubApp::~RubApp()

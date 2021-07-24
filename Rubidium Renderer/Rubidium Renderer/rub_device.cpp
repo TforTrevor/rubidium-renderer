@@ -532,7 +532,8 @@ namespace rub
 		std::vector<VkDescriptorPoolSize> sizes =
 		{
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 }
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 }
 		};
 
 		VkDescriptorPoolCreateInfo poolInfo = {};

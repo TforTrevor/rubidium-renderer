@@ -131,10 +131,10 @@ namespace rub
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 	}
 
-	void RubModel::draw(VkCommandBuffer commandBuffer)
+	void RubModel::draw(VkCommandBuffer commandBuffer, uint32_t firstInstance)
 	{
 		//vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
-		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, firstInstance);
 	}
 
 	std::vector<VkVertexInputBindingDescription> RubModel::Vertex::getBindingDescriptions()

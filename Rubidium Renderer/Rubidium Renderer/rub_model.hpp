@@ -37,7 +37,7 @@ namespace rub
 		~RubModel();
 
 		void bind(VkCommandBuffer commandBuffer);
-		void draw(VkCommandBuffer commandBuffer);
+		void draw(VkCommandBuffer commandBuffer, uint32_t firstInstance);
 
 	private:
 		RubDevice& rubDevice;

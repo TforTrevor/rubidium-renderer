@@ -1,9 +1,11 @@
-#version 450
+#version 460
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 inColor;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inWorldPos;
+layout(location = 3) in vec4 materialAlbedo;
+layout(location = 4) in vec4 materialMaskMap;
 
 layout(location = 0) out vec4 outColor;
 
@@ -23,11 +25,6 @@ layout(set = 0, binding = 2) uniform LightData {
 	vec4 lightPositions[4];
 	vec4 lightColors[4];
 } lightData;
-
-layout(set = 1, binding = 0) uniform MaterialData {
-	vec4 albedo;
-	vec4 maskMap;
-} materialData;
 
 const float PI = 3.14159265359;
 
@@ -85,7 +82,7 @@ void main()
     vec3 N = normalize(inNormal);
     vec3 V = normalize(cameraData.position.xyz - inWorldPos);
 
-	vec3 albedo = materialData.albedo.rgb;
+	vec3 albedo = materialAlbedo.rgb;
 	float metallic = 0.0;
 	float roughness = 0.35;
 	float ao = 1.0;

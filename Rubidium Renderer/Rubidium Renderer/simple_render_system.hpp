@@ -17,6 +17,13 @@ namespace rub
 		glm::vec4 objectPosition;
 	};
 
+	struct GPUObjectData
+	{
+		glm::mat4 modelMatrix;
+		glm::vec4 albedo;
+		glm::vec4 maskMap;
+	};
+
 	class SimpleRenderSystem
 	{
 	public:
@@ -32,7 +39,7 @@ namespace rub
 		VkPipelineLayout pipelineLayout;
 
 		VkDescriptorSetLayout objectSetLayout;
-		AllocatedBuffer objectBuffer;
+		std::vector<AllocatedBuffer> objectBuffers;
 		std::vector<VkDescriptorSet> objectDescriptors;
 
 		void createPipelineLayout(VkDescriptorSetLayout& setLayout);
