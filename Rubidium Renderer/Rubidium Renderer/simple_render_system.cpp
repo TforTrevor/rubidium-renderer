@@ -11,8 +11,8 @@
 
 namespace rub
 {
-	SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain) 
-		: device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
+	SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain, std::shared_ptr<Texture> texture) 
+		: device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }, texture{ texture }
 	{
 		VkDescriptorSetLayout setLayout = globalDescriptor->getLayout();
 		createDescriptorLayouts();
@@ -23,29 +23,41 @@ namespace rub
 
 	void SimpleRenderSystem::createDescriptorLayouts()
 	{
-		VkDescriptorSetLayoutBinding binding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+		VkDescriptorSetLayoutBinding objectBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
 
-		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.pNext = nullptr;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.flags = 0;
-		layoutInfo.pBindings = &binding;
+		VkDescriptorSetLayoutCreateInfo objectLayoutInfo = {};
+		objectLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		objectLayoutInfo.pNext = nullptr;
+		objectLayoutInfo.bindingCount = 1;
+		objectLayoutInfo.flags = 0;
+		objectLayoutInfo.pBindings = &objectBinding;
 
-		vkCreateDescriptorSetLayout(device.getDevice(), &layoutInfo, nullptr, &objectSetLayout);
+		vkCreateDescriptorSetLayout(device.getDevice(), &objectLayoutInfo, nullptr, &objectSetLayout);
+
+
+		VkDescriptorSetLayoutBinding textureBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+
+		VkDescriptorSetLayoutCreateInfo textureLayoutInfo = {};
+		textureLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		textureLayoutInfo.pNext = nullptr;
+		textureLayoutInfo.bindingCount = 1;
+		textureLayoutInfo.flags = 0;
+		textureLayoutInfo.pBindings = &textureBinding;
+
+		vkCreateDescriptorSetLayout(device.getDevice(), &textureLayoutInfo, nullptr, &textureSetLayout);
 	}
 
 	void SimpleRenderSystem::createBuffers()
 	{
 		objectDescriptors.resize(FRAME_COUNT);
 		objectBuffers.resize(FRAME_COUNT);
+		textureDescriptors.resize(FRAME_COUNT);
 
 		for (int i = 0; i < FRAME_COUNT; i++)
 		{
 			//size_t bufferSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUObjectData)) * MAX_OBJECTS;
 			size_t bufferSize = sizeof(GPUObjectData) * MAX_OBJECTS;
 			device.createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, objectBuffers[i]);
-
 			device.getDescriptor(objectSetLayout, objectDescriptors[i]);
 
 			VkDescriptorBufferInfo bufferInfo{};
@@ -53,8 +65,20 @@ namespace rub
 			bufferInfo.range = bufferSize;
 
 			VkWriteDescriptorSet setWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, objectDescriptors[i], &bufferInfo, 0);
-
 			vkUpdateDescriptorSets(device.getDevice(), 1, &setWrite, 0, nullptr);
+
+
+			VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
+			VkSampler sampler;
+			vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &sampler);
+			device.getDescriptor(textureSetLayout, textureDescriptors[i]);
+			VkDescriptorImageInfo imageBufferInfo;
+			imageBufferInfo.sampler = sampler;
+			imageBufferInfo.imageView = texture->getImageView();
+			imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			VkWriteDescriptorSet texture1 = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptors[i], &imageBufferInfo, 0);
+			vkUpdateDescriptorSets(device.getDevice(), 1, &texture1, 0, nullptr);
 		}
 	}
 
@@ -65,11 +89,11 @@ namespace rub
 		//pushConstant.size = sizeof(MeshPushConstants);
 		//pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-		VkDescriptorSetLayout setLayouts[] = { globalLayout, objectSetLayout };
+		VkDescriptorSetLayout setLayouts[] = { globalLayout, objectSetLayout, textureSetLayout };
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 2;
+		pipelineLayoutInfo.setLayoutCount = 3;
 		pipelineLayoutInfo.pSetLayouts = setLayouts;
 		//pipelineLayoutInfo.pushConstantRangeCount = 1;
 		//pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
@@ -116,6 +140,7 @@ namespace rub
 		vmaUnmapMemory(device.getAllocator(), objectBuffers[frameIndex % FRAME_COUNT].allocation);
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1, &textureDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
 
 		for (int i = 0; i < renderObjects.size(); i++)
 		{

@@ -492,7 +492,7 @@ namespace rub
 		}
 	}
 
-	void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+	VkCommandBuffer Device::beginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -509,10 +509,11 @@ namespace rub
 
 		vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-		VkBufferCopy copyRegion{};
-		copyRegion.size = size;
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+		return commandBuffer;
+	}
 
+	void Device::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+	{
 		vkEndCommandBuffer(commandBuffer);
 
 		VkSubmitInfo submitInfo{};
@@ -533,7 +534,8 @@ namespace rub
 		{
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10 },
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 }
+			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10 }
 		};
 
 		VkDescriptorPoolCreateInfo poolInfo = {};

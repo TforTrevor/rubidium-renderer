@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <iostream>
 
+#include "vk_util.hpp"
+
 namespace rub
 {
 	Model::Model(Device& device, const std::string modelPath) : device{ device }
@@ -97,7 +99,7 @@ namespace rub
 
 		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, vertexBuffer);
 
-		device.copyBuffer(stagingBuffer.buffer, vertexBuffer.buffer, bufferSize);
+		VkUtil::copyBuffer(device, stagingBuffer.buffer, vertexBuffer.buffer, bufferSize);
 
 		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	}
@@ -118,7 +120,7 @@ namespace rub
 
 		device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY, indexBuffer);
 
-		device.copyBuffer(stagingBuffer.buffer, indexBuffer.buffer, bufferSize);
+		VkUtil::copyBuffer(device, stagingBuffer.buffer, indexBuffer.buffer, bufferSize);
 
 		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 	}

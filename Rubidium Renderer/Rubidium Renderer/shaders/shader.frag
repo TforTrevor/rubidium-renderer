@@ -6,6 +6,7 @@ layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inWorldPos;
 layout(location = 3) in vec4 materialAlbedo;
 layout(location = 4) in vec4 materialMaskMap;
+layout(location = 5) in vec2 texCoord;
 
 layout(location = 0) out vec4 outColor;
 
@@ -25,6 +26,8 @@ layout(set = 0, binding = 2) uniform LightData {
 	vec4 lightPositions[4];
 	vec4 lightColors[4];
 } lightData;
+
+layout(set = 2, binding = 0) uniform sampler2D tex1;
 
 const float PI = 3.14159265359;
 
@@ -82,7 +85,7 @@ void main()
     vec3 N = normalize(inNormal);
     vec3 V = normalize(cameraData.position.xyz - inWorldPos);
 
-	vec3 albedo = materialAlbedo.rgb;
+	vec3 albedo = texture(tex1, texCoord).rgb;
 	float metallic = 0.0;
 	float roughness = 0.35;
 	float ao = 1.0;

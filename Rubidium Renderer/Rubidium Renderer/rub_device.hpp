@@ -15,6 +15,12 @@ namespace rub
 		VmaAllocation allocation;
 	};
 
+	struct AllocatedImage
+	{
+		VkImage image;
+		VmaAllocation allocation;
+	};
+
 	struct SwapChainSupportDetails
 	{
 		VkSurfaceCapabilitiesKHR capabilities;
@@ -55,7 +61,8 @@ namespace rub
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		VkCommandBuffer beginSingleTimeCommands();
+		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 		void getDescriptor(VkDescriptorSetLayout& setLayout, VkDescriptorSet& descriptorSet);
 		VkPhysicalDeviceProperties getDeviceProperties() { return deviceProperties; };
 		size_t padUniformBufferSize(size_t originalSize);

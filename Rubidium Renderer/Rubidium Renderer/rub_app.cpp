@@ -11,11 +11,12 @@ namespace rub
 	RubApp::RubApp()
 	{
 		loadObjects();
+		loadTextures();
 	}
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ device, renderer.getRenderPass(), renderer.getGlobalDescriptor(), renderer.getSwapChain() };
+		SimpleRenderSystem renderSystem{ device, renderer.getRenderPass(), renderer.getGlobalDescriptor(), renderer.getSwapChain(), texture };
 
 		double lastTime = glfwGetTime();
 		int nbFrames = 0;
@@ -95,6 +96,13 @@ namespace rub
 		//	obj.position = glm::vec3(0, -1, 0);
 		//	gameObjects.push_back(std::move(obj));
 		//}
+	}
+
+	void RubApp::loadTextures()
+	{
+		std::shared_ptr<Texture> blueWall = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png");
+		std::shared_ptr<Texture> brickWall = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png");
+		texture = brickWall;
 	}
 
 	RubApp::~RubApp()

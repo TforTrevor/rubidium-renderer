@@ -5,6 +5,7 @@
 #include "rub_render_object.hpp"
 #include "rub_swap_chain.hpp"
 #include "rub_renderer.hpp"
+#include "rub_texture.hpp"
 
 #include <memory>
 #include <vector>
@@ -27,7 +28,7 @@ namespace rub
 	class SimpleRenderSystem
 	{
 	public:
-		SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain);
+		SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain, std::shared_ptr<Texture> texture);
 		~SimpleRenderSystem();
 
 		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject> renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
@@ -42,6 +43,9 @@ namespace rub
 		std::vector<AllocatedBuffer> objectBuffers;
 		std::vector<VkDescriptorSet> objectDescriptors;
 
+		VkDescriptorSetLayout textureSetLayout;
+		std::vector<VkDescriptorSet> textureDescriptors;
+
 		void createPipelineLayout(VkDescriptorSetLayout& setLayout);
 		void createPipeline(VkRenderPass renderPass);
 		void createDescriptorLayouts();
@@ -50,5 +54,7 @@ namespace rub
 		int frameIndex = 0;
 		const int FRAME_COUNT = 2;
 		const int MAX_OBJECTS = 10000;
+
+		std::shared_ptr<Texture> texture;
 	};
 }

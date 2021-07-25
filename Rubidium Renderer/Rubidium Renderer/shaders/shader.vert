@@ -28,6 +28,7 @@ layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outWorldPos;
 layout(location = 3) out vec4 outMaterialAlbedo;
 layout(location = 4) out vec4 outMaterialMaskMap;
+layout(location = 5) out vec2 outTexCoord;
 
 void main() 
 {
@@ -38,6 +39,7 @@ void main()
     outNormal = mat3(objectBuffer.objects[gl_InstanceIndex].modelMatrix) * normal;
 	outMaterialAlbedo = objectBuffer.objects[gl_InstanceIndex].albedo;
 	outMaterialMaskMap = objectBuffer.objects[gl_InstanceIndex].maskMap;
+	outTexCoord = texCoord;
 	//outMaterialAlbedo = vec4(1, 1, 1, 1);
 	//outMaterialMaskMap = vec4(1, 1, 1, 1);
 

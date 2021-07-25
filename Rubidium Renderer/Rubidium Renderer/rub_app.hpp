@@ -6,6 +6,7 @@
 #include "rub_swap_chain.hpp"
 #include "rub_render_object.hpp"
 #include "rub_renderer.hpp"
+#include "rub_texture.hpp"
 
 #include <memory>
 #include <vector>
@@ -32,5 +33,8 @@ namespace rub
 		std::vector<RenderObject> renderObjects;
 
 		void loadObjects();
+		void loadTextures();
+
+		std::shared_ptr<Texture> texture;
 	};
 }
