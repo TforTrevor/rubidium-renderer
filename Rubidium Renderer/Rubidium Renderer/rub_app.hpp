@@ -34,7 +34,5 @@ namespace rub
 
 		void loadObjects();
 		void loadTextures();
-
-		std::shared_ptr<Texture> texture;
 	};
 }

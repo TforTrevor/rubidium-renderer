@@ -28,33 +28,23 @@ namespace rub
 	class SimpleRenderSystem
 	{
 	public:
-		SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain, std::shared_ptr<Texture> texture);
+		SimpleRenderSystem(Device& device, std::unique_ptr<SwapChain>& swapChain);
 		~SimpleRenderSystem();
 
-		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject> renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
+		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor, VkRenderPass& renderPass);
 
 	private:
 		Device& device;
 
-		std::unique_ptr<Pipeline> pipeline;
-		VkPipelineLayout pipelineLayout;
-
-		VkDescriptorSetLayout objectSetLayout;
+		VkDescriptorSetLayout objectLayout;
 		std::vector<AllocatedBuffer> objectBuffers;
 		std::vector<VkDescriptorSet> objectDescriptors;
 
-		VkDescriptorSetLayout textureSetLayout;
-		std::vector<VkDescriptorSet> textureDescriptors;
-
-		void createPipelineLayout(VkDescriptorSetLayout& setLayout);
-		void createPipeline(VkRenderPass renderPass);
 		void createDescriptorLayouts();
 		void createBuffers();
 
-		int frameIndex = 0;
+		size_t frameIndex = 0;
 		const int FRAME_COUNT = 2;
 		const int MAX_OBJECTS = 10000;
-
-		std::shared_ptr<Texture> texture;
 	};
 }

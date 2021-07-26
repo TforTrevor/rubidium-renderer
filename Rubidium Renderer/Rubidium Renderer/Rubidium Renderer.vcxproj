@@ -211,6 +211,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rub_app.cpp" />
     <ClCompile Include="rub_device.cpp" />
+    <ClCompile Include="rub_material.cpp" />
     <ClCompile Include="rub_model.cpp" />
     <ClCompile Include="rub_pipeline.cpp" />
     <ClCompile Include="rub_renderer.cpp" />
@@ -255,6 +256,7 @@
     <ClInclude Include="global_descriptor.hpp" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_device.hpp" />
+    <ClInclude Include="rub_material.hpp" />
     <ClInclude Include="rub_render_object.hpp" />
     <ClInclude Include="rub_model.hpp" />
     <ClInclude Include="rub_pipeline.hpp" />

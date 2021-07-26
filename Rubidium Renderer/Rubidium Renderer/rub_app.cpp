@@ -16,7 +16,8 @@ namespace rub
 
 	void RubApp::run()
 	{
-		SimpleRenderSystem renderSystem{ device, renderer.getRenderPass(), renderer.getGlobalDescriptor(), renderer.getSwapChain(), texture };
+		VkRenderPass renderPass = renderer.getRenderPass();
+		SimpleRenderSystem renderSystem{ device, renderer.getSwapChain() };
 
 		double lastTime = glfwGetTime();
 		int nbFrames = 0;
@@ -29,7 +30,7 @@ namespace rub
 			if (commandBuffer != nullptr)
 			{
 				renderer.beginRenderPass(commandBuffer);
-				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor());
+				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor(), renderPass);
 				renderer.endRenderPass(commandBuffer);
 				renderer.endFrame();
 			}
@@ -57,30 +58,42 @@ namespace rub
 		std::shared_ptr<Model> suzanne = std::make_shared<Model>(device, "models/suzanne_2.obj");
 		std::shared_ptr<Model> triangle = std::make_shared<Model>(device, "models/triangle.obj");
 		std::shared_ptr<Model> cube = std::make_shared<Model>(device, "models/cube.obj");
+		std::shared_ptr<Model> sphere = std::make_shared<Model>(device, "models/sphere.obj");
+
+		std::shared_ptr<Texture> blueWallAlbedo = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png", VK_FORMAT_R8G8B8A8_SRGB);
+		std::shared_ptr<Texture> blueWallNormal = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+		std::shared_ptr<Texture> blueWallMask = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+
+		std::shared_ptr<Texture> brickWallAlbedo = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png", VK_FORMAT_R8G8B8A8_SRGB);
+		std::shared_ptr<Texture> brickWallNormal = std::make_shared<Texture>(device, "textures/Bricks071_1K_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+		std::shared_ptr<Texture> brickWallMask = std::make_shared<Texture>(device, "textures/Bricks071_1K_Roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+
+		std::shared_ptr<Material> blueWallMaterial = std::make_shared<Material>(device, blueWallAlbedo, blueWallNormal, blueWallMask);
+		std::shared_ptr<Material> brickWallMaterial = std::make_shared<Material>(device, brickWallAlbedo, brickWallNormal, brickWallMask);
 
 		RenderObject object{};
-		object.model = suzanne;
+		object.model = sphere;
 		object.position = glm::vec3(-1.5f, 0, 0);
 		object.rotation = glm::vec3(0, glm::radians(0.0f), 0);
-		object.material = RenderObject::Material{ glm::vec4(1.0f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
+		object.material = brickWallMaterial;
 
 		RenderObject object2{};
-		object2.model = suzanne;
+		object2.model = sphere;
 		object2.position = glm::vec3(1.5f, 0, 0);
 		object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object2.material = RenderObject::Material{ glm::vec4(1.0f, 0.5f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
+		object2.material = blueWallMaterial;
 
-		RenderObject object3{};
-		object3.model = cube;
-		object3.position = glm::vec3(-1.5f, 0, 0);
-		object3.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object3.material = RenderObject::Material{ glm::vec4(1.0f, 1.0f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
+		//RenderObject object3{};
+		//object3.model = cube;
+		//object3.position = glm::vec3(-1.5f, 0, 0);
+		//object3.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		//object3.material = RenderObject::Material{ glm::vec4(1.0f, 1.0f, 0.5f, 1), glm::vec4(0, 1, 0, 0) };
 
-		RenderObject object4{};
-		object4.model = cube;
-		object4.position = glm::vec3(1.5f, 0, 0);
-		object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
-		object4.material = RenderObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
+		//RenderObject object4{};
+		//object4.model = cube;
+		//object4.position = glm::vec3(1.5f, 0, 0);
+		//object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		//object4.material = RenderObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
 		renderObjects.push_back(std::move(object));
 		renderObjects.push_back(std::move(object2));
@@ -100,9 +113,7 @@ namespace rub
 
 	void RubApp::loadTextures()
 	{
-		std::shared_ptr<Texture> blueWall = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png");
-		std::shared_ptr<Texture> brickWall = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png");
-		texture = brickWall;
+		
 	}
 
 	RubApp::~RubApp()

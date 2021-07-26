@@ -9,15 +9,15 @@
 
 namespace rub
 {
-	Texture::Texture(Device& device, const char* file) : device{ device }
+	Texture::Texture(Device& device, const char* file, VkFormat format) : device{ device }
 	{
-		if (createImage(file))
+		if (createImage(file, format))
 		{
-			createImageView();
+			createImageView(format);
 		}		
 	}
 
-	bool Texture::createImage(const char* file)
+	bool Texture::createImage(const char* file, VkFormat format)
 	{
 		int texWidth, texHeight, texChannels;
 
@@ -31,9 +31,6 @@ namespace rub
 
 		void* pixel_ptr = pixels;
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
-
-		//the format R8G8B8A8 matches exactly with the pixels loaded from stb_image lib
-		VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB;
 
 		//allocate temporary buffer for holding texture data to upload
 		AllocatedBuffer stagingBuffer;
@@ -54,7 +51,7 @@ namespace rub
 		imageExtent.height = static_cast<uint32_t>(texHeight);
 		imageExtent.depth = 1;
 
-		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo(imageFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo(format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
 		AllocatedImage newImage;
 
@@ -64,7 +61,7 @@ namespace rub
 		//allocate and create the image
 		vmaCreateImage(device.getAllocator(), &createInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
 
-		transitionImageLayout(stagingBuffer, newImage, imageFormat, imageExtent);
+		transitionImageLayout(stagingBuffer, newImage, format, imageExtent);
 
 		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 
@@ -121,9 +118,9 @@ namespace rub
 		device.endSingleTimeCommands(commandBuffer);
 	}
 
-	void Texture::createImageView()
+	void Texture::createImageView(VkFormat format)
 	{
-		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R8G8B8A8_SRGB, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo(format, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
 		vkCreateImageView(device.getDevice(), &imageinfo, nullptr, &imageView);
 	}
 

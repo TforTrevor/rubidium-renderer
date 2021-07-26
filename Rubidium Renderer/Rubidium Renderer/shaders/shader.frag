@@ -27,7 +27,9 @@ layout(set = 0, binding = 2) uniform LightData {
 	vec4 lightColors[4];
 } lightData;
 
-layout(set = 2, binding = 0) uniform sampler2D tex1;
+layout(set = 2, binding = 0) uniform sampler2D albedoMap;
+layout(set = 2, binding = 1) uniform sampler2D normalMap;
+layout(set = 2, binding = 2) uniform sampler2D maskMap;
 
 const float PI = 3.14159265359;
 
@@ -71,7 +73,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
-vec3 aces(vec3 x) {
+vec3 aces(vec3 x) 
+{
   const float a = 2.51;
   const float b = 0.03;
   const float c = 2.43;
@@ -80,14 +83,31 @@ vec3 aces(vec3 x) {
   return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalMap, texCoord).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(inWorldPos);
+    vec3 Q2  = dFdy(inWorldPos);
+    vec2 st1 = dFdx(texCoord);
+    vec2 st2 = dFdy(texCoord);
+
+    vec3 N   = normalize(inNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+
 void main()
 {		
-    vec3 N = normalize(inNormal);
+    vec3 N = getNormalFromMap();
     vec3 V = normalize(cameraData.position.xyz - inWorldPos);
 
-	vec3 albedo = texture(tex1, texCoord).rgb;
-	float metallic = 0.0;
-	float roughness = 0.35;
+	vec3 albedo = texture(albedoMap, texCoord).rgb;
+	float metallic = 0;
+	float roughness = texture(maskMap, texCoord).r;
 	float ao = 1.0;
 
 	// calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 

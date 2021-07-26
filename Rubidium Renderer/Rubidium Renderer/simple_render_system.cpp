@@ -11,14 +11,11 @@
 
 namespace rub
 {
-	SimpleRenderSystem::SimpleRenderSystem(Device& device, VkRenderPass renderPass, std::unique_ptr<GlobalDescriptor>& globalDescriptor, std::unique_ptr<SwapChain>& swapChain, std::shared_ptr<Texture> texture) 
-		: device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }, texture{ texture }
+	SimpleRenderSystem::SimpleRenderSystem(Device& device,  std::unique_ptr<SwapChain>& swapChain) 
+		: device{ device }, FRAME_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
 	{
-		VkDescriptorSetLayout setLayout = globalDescriptor->getLayout();
 		createDescriptorLayouts();
 		createBuffers();
-		createPipelineLayout(setLayout);
-		createPipeline(renderPass);
 	}
 
 	void SimpleRenderSystem::createDescriptorLayouts()
@@ -32,33 +29,20 @@ namespace rub
 		objectLayoutInfo.flags = 0;
 		objectLayoutInfo.pBindings = &objectBinding;
 
-		vkCreateDescriptorSetLayout(device.getDevice(), &objectLayoutInfo, nullptr, &objectSetLayout);
-
-
-		VkDescriptorSetLayoutBinding textureBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-
-		VkDescriptorSetLayoutCreateInfo textureLayoutInfo = {};
-		textureLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		textureLayoutInfo.pNext = nullptr;
-		textureLayoutInfo.bindingCount = 1;
-		textureLayoutInfo.flags = 0;
-		textureLayoutInfo.pBindings = &textureBinding;
-
-		vkCreateDescriptorSetLayout(device.getDevice(), &textureLayoutInfo, nullptr, &textureSetLayout);
+		vkCreateDescriptorSetLayout(device.getDevice(), &objectLayoutInfo, nullptr, &objectLayout);
 	}
 
 	void SimpleRenderSystem::createBuffers()
 	{
 		objectDescriptors.resize(FRAME_COUNT);
 		objectBuffers.resize(FRAME_COUNT);
-		textureDescriptors.resize(FRAME_COUNT);
 
 		for (int i = 0; i < FRAME_COUNT; i++)
 		{
 			//size_t bufferSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUObjectData)) * MAX_OBJECTS;
 			size_t bufferSize = sizeof(GPUObjectData) * MAX_OBJECTS;
 			device.createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, objectBuffers[i]);
-			device.getDescriptor(objectSetLayout, objectDescriptors[i]);
+			device.getDescriptor(objectLayout, objectDescriptors[i]);
 
 			VkDescriptorBufferInfo bufferInfo{};
 			bufferInfo.buffer = objectBuffers[i].buffer;
@@ -66,59 +50,12 @@ namespace rub
 
 			VkWriteDescriptorSet setWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, objectDescriptors[i], &bufferInfo, 0);
 			vkUpdateDescriptorSets(device.getDevice(), 1, &setWrite, 0, nullptr);
-
-
-			VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
-			VkSampler sampler;
-			vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &sampler);
-			device.getDescriptor(textureSetLayout, textureDescriptors[i]);
-			VkDescriptorImageInfo imageBufferInfo;
-			imageBufferInfo.sampler = sampler;
-			imageBufferInfo.imageView = texture->getImageView();
-			imageBufferInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkWriteDescriptorSet texture1 = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptors[i], &imageBufferInfo, 0);
-			vkUpdateDescriptorSets(device.getDevice(), 1, &texture1, 0, nullptr);
 		}
 	}
 
-	void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout& globalLayout)
+	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor, VkRenderPass& renderPass)
 	{
-		//VkPushConstantRange pushConstant{};
-		//pushConstant.offset = 0;
-		//pushConstant.size = sizeof(MeshPushConstants);
-		//pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkDescriptorSetLayout setLayouts[] = { globalLayout, objectSetLayout, textureSetLayout };
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 3;
-		pipelineLayoutInfo.pSetLayouts = setLayouts;
-		//pipelineLayoutInfo.pushConstantRangeCount = 1;
-		//pipelineLayoutInfo.pPushConstantRanges = &pushConstant;
-		if (vkCreatePipelineLayout(device.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create pipeline layout!");
-		}
-	}
-
-	void SimpleRenderSystem::createPipeline(VkRenderPass renderPass)
-	{
-		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
-
-		PipelineConfigInfo pipelineConfig{};
-		Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-		pipelineConfig.renderPass = renderPass;
-		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		pipeline = std::make_unique<Pipeline>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
-	}
-
-	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject> renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor)
-	{
-		pipeline->bind(commandBuffer);
-		globalDescriptor->bind(commandBuffer, pipelineLayout);
+		VkDescriptorSetLayout globalLayout = globalDescriptor->getLayout();
 
 		void* objectData;
 		vmaMapMemory(device.getAllocator(), objectBuffers[frameIndex % FRAME_COUNT].allocation, &objectData);
@@ -133,20 +70,34 @@ namespace rub
 			model = glm::rotate(model, glm::radians(frameIndex * 0.4f), glm::vec3(0, 1, 0));
 
 			objectSSBO[i].modelMatrix = model;
-			objectSSBO[i].albedo = object.material.albedo;
-			objectSSBO[i].maskMap = object.material.maskMap;
 		}
 
 		vmaUnmapMemory(device.getAllocator(), objectBuffers[frameIndex % FRAME_COUNT].allocation);
 
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1, &textureDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
+		std::shared_ptr<Material> previousMaterial = nullptr;
+		std::shared_ptr<Model> previousModel = nullptr;
 
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
 			auto object = renderObjects[i];
 
-			object.model->bind(commandBuffer);
+			if (object.material != previousMaterial)
+			{
+				if (!object.material->isReady())
+				{
+					object.material->setup(globalLayout, objectLayout, renderPass);
+				}
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->getLayout(), 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
+				globalDescriptor->bind(commandBuffer, object.material->getLayout());
+				object.material->bind(commandBuffer);
+				previousMaterial = object.material;
+			}
+
+			if (object.model != previousModel)
+			{
+				object.model->bind(commandBuffer);
+			}
+
 			object.model->draw(commandBuffer, i);
 		}
 
@@ -155,9 +106,7 @@ namespace rub
 
 	SimpleRenderSystem::~SimpleRenderSystem()
 	{
-		vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
-
-		vkDestroyDescriptorSetLayout(device.getDevice(), objectSetLayout, nullptr);
+		vkDestroyDescriptorSetLayout(device.getDevice(), objectLayout, nullptr);
 
 		for (int i = 0; i < objectBuffers.size(); i++)
 		{
