@@ -8,6 +8,7 @@
 
 #include <stdexcept>
 #include <array>
+#include <chrono>
 
 namespace rub
 {
@@ -63,13 +64,13 @@ namespace rub
 
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
-			auto object = renderObjects[i];
+			auto& object = renderObjects[i];
 
-			glm::mat4 model = glm::translate(glm::mat4{ 1.0f }, object.position);
-			model *= glm::eulerAngleXYZ(object.rotation.x, object.rotation.y, object.rotation.z);
-			model = glm::rotate(model, glm::radians(frameIndex * 0.4f), glm::vec3(0, 1, 0));
+			//object.transform.rotate(glm::vec3(0, 0.4f, 0));
 
-			objectSSBO[i].modelMatrix = model;
+			//model = glm::rotate(model, glm::radians(frameIndex * 0.4f), glm::vec3(0, 1, 0));
+
+			objectSSBO[i].modelMatrix = object.transform.getMatrix();
 		}
 
 		vmaUnmapMemory(device.getAllocator(), objectBuffers[frameIndex % FRAME_COUNT].allocation);
@@ -79,7 +80,7 @@ namespace rub
 
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
-			auto object = renderObjects[i];
+			auto& object = renderObjects[i];
 
 			if (object.material != previousMaterial)
 			{
@@ -96,6 +97,7 @@ namespace rub
 			if (object.model != previousModel)
 			{
 				object.model->bind(commandBuffer);
+				previousModel = object.model;
 			}
 
 			object.model->draw(commandBuffer, i);

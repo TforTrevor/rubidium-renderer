@@ -20,12 +20,13 @@ namespace rub
 		textureLayoutInfo.flags = 0;
 		textureLayoutInfo.pBindings = textureBinding;
 
-		vkCreateDescriptorSetLayout(device.getDevice(), &textureLayoutInfo, nullptr, &textureSetLayout);		
+		vkCreateDescriptorSetLayout(device.getDevice(), &textureLayoutInfo, nullptr, &textureSetLayout);
+
+		createBuffers();
 	}
 
 	void Material::setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout, VkRenderPass renderPass)
 	{
-		createBuffers();
 		createPipelineLayout(globalLayout, objectSetLayout);
 		createPipeline(renderPass);
 	}
@@ -90,10 +91,11 @@ namespace rub
 
 	Material::~Material()
 	{
-		vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
-		vkDestroyDescriptorSetLayout(device.getDevice(), textureSetLayout, nullptr);
 		vkDestroySampler(device.getDevice(), albedoSampler, nullptr);
 		vkDestroySampler(device.getDevice(), normalSampler, nullptr);
 		vkDestroySampler(device.getDevice(), maskSampler, nullptr);
+		vkDestroyDescriptorSetLayout(device.getDevice(), textureSetLayout, nullptr);
+		if (isReady())
+			vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 	}
 }

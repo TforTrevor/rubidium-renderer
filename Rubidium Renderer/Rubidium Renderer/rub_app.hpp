@@ -33,6 +33,5 @@ namespace rub
 		std::vector<RenderObject> renderObjects;
 
 		void loadObjects();
-		void loadTextures();
 	};
 }

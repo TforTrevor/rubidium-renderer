@@ -2,6 +2,7 @@
 
 #include "rub_model.hpp"
 #include "rub_material.hpp"
+#include "rub_transform.hpp"
 
 #include <memory>
 
@@ -14,8 +15,7 @@ namespace rub
 		~RenderObject() {}
 
 		std::shared_ptr<Model> model{};
-		glm::vec3 position;
-		glm::vec3 rotation;
 		std::shared_ptr<Material> material;
+		Transform transform;
 	};
 }

@@ -5,13 +5,13 @@
 #include <array>
 #include <sstream>
 #include <iomanip>
+#include <chrono>
 
 namespace rub
 {
 	RubApp::RubApp()
 	{
 		loadObjects();
-		loadTextures();
 	}
 
 	void RubApp::run()
@@ -26,12 +26,21 @@ namespace rub
 		{
 			glfwPollEvents();
 
+			double cpuTime = 0;
+
 			auto commandBuffer = renderer.beginFrame();
 			if (commandBuffer != nullptr)
 			{
+				using namespace std::chrono;
+				
+				auto cpuTime1 = high_resolution_clock::now();
 				renderer.beginRenderPass(commandBuffer);
 				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor(), renderPass);
 				renderer.endRenderPass(commandBuffer);
+				auto cpuTime2 = high_resolution_clock::now();
+				duration<double, std::milli> cpuTimeMs = cpuTime2 - cpuTime1;
+				cpuTime = cpuTimeMs.count();
+
 				renderer.endFrame();
 			}
 
@@ -42,7 +51,7 @@ namespace rub
 			  // printf and reset timer
 				//printf("%f ms/frame\n", 1000.0 / double(nbFrames));
 				std::stringstream suffix;
-				suffix << std::fixed << std::setprecision(3) << 1000.0 / double(nbFrames) << "ms";
+				suffix << std::fixed << std::setprecision(3) << 1000.0 / double(nbFrames) << "ms - CPU Time: " << cpuTime << "ms";
 				window.changeTitleSuffix(suffix.str());
 
 				nbFrames = 0;
@@ -73,14 +82,12 @@ namespace rub
 
 		RenderObject object{};
 		object.model = sphere;
-		object.position = glm::vec3(-1.5f, 0, 0);
-		object.rotation = glm::vec3(0, glm::radians(0.0f), 0);
-		object.material = brickWallMaterial;
+		object.transform = Transform{ glm::vec3(-1.5f, 0, 0), glm::vec3(0, 0.0f, 0) };
+		object.material = blueWallMaterial;
 
 		RenderObject object2{};
 		object2.model = sphere;
-		object2.position = glm::vec3(1.5f, 0, 0);
-		object2.rotation = glm::vec3(0, glm::radians(180.0f), 0);
+		object2.transform = Transform{ glm::vec3(1.5f, 0, 0), glm::vec3(0, 180.0f, 0) };
 		object2.material = blueWallMaterial;
 
 		//RenderObject object3{};
@@ -95,25 +102,21 @@ namespace rub
 		//object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
 		//object4.material = RenderObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		renderObjects.push_back(std::move(object));
-		renderObjects.push_back(std::move(object2));
+		//renderObjects.push_back(std::move(object));
+		//renderObjects.push_back(std::move(object2));
 		//gameObjects.push_back(std::move(object3));
 		//gameObjects.push_back(std::move(object4));
 
-		//int objectCount = 10000;
+		int objectCount = 10000;
 
-		//for (int i = 0; i < objectCount; i++)
-		//{
-		//	RubGameObject obj{};
-		//	obj.model = triangle;
-		//	obj.position = glm::vec3(0, -1, 0);
-		//	gameObjects.push_back(std::move(obj));
-		//}
-	}
-
-	void RubApp::loadTextures()
-	{
-		
+		for (int i = 0; i < objectCount; i++)
+		{
+			RenderObject obj{};
+			obj.model = triangle;
+			obj.transform = Transform{ glm::vec3(0, -1.0f, 0), glm::vec3(0, 0.0f, 0) };
+			obj.material = blueWallMaterial;
+			renderObjects.push_back(std::move(obj));
+		}
 	}
 
 	RubApp::~RubApp()

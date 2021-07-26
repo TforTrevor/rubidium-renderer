@@ -131,6 +131,9 @@ namespace rub
 			if (isDeviceSuitable(device))
 			{
 				physicalDevice = device;
+				VkPhysicalDeviceFeatures deviceFeatures;
+				vkGetPhysicalDeviceProperties(device, &deviceProperties);
+				std::cout << "GPU: " << deviceProperties.deviceName << std::endl;
 				break;
 			}
 		}
