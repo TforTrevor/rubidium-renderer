@@ -17,12 +17,13 @@ namespace rub
 		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 		VkDescriptorSetLayoutBinding sceneBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 		VkDescriptorSetLayoutBinding lightBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
-		VkDescriptorSetLayoutBinding bindings[] = { cameraBinding, sceneBinding, lightBinding };
+		VkDescriptorSetLayoutBinding hdriBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
+		VkDescriptorSetLayoutBinding bindings[] = { cameraBinding, sceneBinding, lightBinding, hdriBinding };
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.pNext = nullptr;
-		layoutInfo.bindingCount = 3;
+		layoutInfo.bindingCount = 4;
 		layoutInfo.flags = 0;
 		layoutInfo.pBindings = bindings;
 
@@ -39,6 +40,13 @@ namespace rub
 
 		size_t lightSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPULightData)) * FRAME_COUNT;
 		device.createBuffer(lightSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, lightBuffer);
+
+		//VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		//vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &hdriSampler);
+		//VkDescriptorImageInfo hdriInfo;
+		//hdriInfo.sampler = hdriSampler;
+		//hdriInfo.imageView = albedo->getImageView();
+		//hdriInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		for (int i = 0; i < FRAME_COUNT; i++)
 		{
@@ -59,6 +67,7 @@ namespace rub
 			VkWriteDescriptorSet cameraWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &cameraBufferInfo, 0);
 			VkWriteDescriptorSet sceneWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &sceneBufferInfo, 1);
 			VkWriteDescriptorSet lightWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, globalDescriptors[i], &lightBufferInfo, 2);
+			//VkWriteDescriptorSet hdriWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, globalDescriptors[i], &hdriInfo, 3);
 			VkWriteDescriptorSet setWrites[] = { cameraWrite, sceneWrite, lightWrite };
 
 			vkUpdateDescriptorSets(device.getDevice(), 3, setWrites, 0, nullptr);

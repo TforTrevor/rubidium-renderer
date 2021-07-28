@@ -18,14 +18,11 @@ namespace rub
 	glm::mat4 Transform::getMatrix()
 	{
 		glm::mat4 matrix = glm::mat4{ 1.0f };
-		if (position != previousPosition)
+		if (position != previousPosition || rotation != previousRotation)
 		{
 			matrix = glm::translate(matrix, position);
 			previousPosition = position;
 			positionMatrix = matrix;
-		}
-		if (rotation != previousRotation)
-		{
 			glm::mat4 rotationMatrix = positionMatrix * glm::eulerAngleXYZ(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z));
 			previousRotation = rotation;
 			finalMatrix = rotationMatrix;
@@ -39,6 +36,12 @@ namespace rub
 		glm::vec3 add = glm::vec3(rotation.x + rotate.x, rotation.y + rotate.y, rotation.z + rotate.z);
 		glm::vec3 modulo = glm::vec3(fmod(add.x, 360.0f), fmod(add.y, 360.0f), fmod(add.z, 360.0f));
 		rotation = modulo;
+	}
+
+	void Transform::move(glm::vec3 movement)
+	{
+		glm::vec3 add = glm::vec3(position.x + movement.x, position.y + movement.y, position.z + movement.z);
+		position = add;
 	}
 
 	Transform::~Transform()

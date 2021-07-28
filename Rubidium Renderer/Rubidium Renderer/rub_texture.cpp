@@ -9,7 +9,7 @@
 
 namespace rub
 {
-	Texture::Texture(Device& device, const char* file, VkFormat format) : device{ device }
+	Texture::Texture(Device& device, const char* file, Format format) : device{ device }
 	{
 		if (createImage(file, format))
 		{
@@ -17,7 +17,7 @@ namespace rub
 		}		
 	}
 
-	bool Texture::createImage(const char* file, VkFormat format)
+	bool Texture::createImage(const char* file, Format format)
 	{
 		int texWidth, texHeight, texChannels;
 
@@ -32,16 +32,14 @@ namespace rub
 		void* pixel_ptr = pixels;
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-		//allocate temporary buffer for holding texture data to upload
 		AllocatedBuffer stagingBuffer;
 		device.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
 
-		//copy data to buffer
 		void* data;
 		vmaMapMemory(device.getAllocator(), stagingBuffer.allocation, &data);
 		memcpy(data, pixel_ptr, static_cast<size_t>(imageSize));
 		vmaUnmapMemory(device.getAllocator(), stagingBuffer.allocation);
-		//we no longer need the loaded data, so we can free the pixels as they are now in the staging buffer
+
 		stbi_image_free(pixels);
 
 
@@ -51,14 +49,12 @@ namespace rub
 		imageExtent.height = static_cast<uint32_t>(texHeight);
 		imageExtent.depth = 1;
 
-		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo(format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo((VkFormat)format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
 		AllocatedImage newImage;
 
 		VmaAllocationCreateInfo allocationInfo = {};
 		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-		//allocate and create the image
 		vmaCreateImage(device.getAllocator(), &createInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
 
 		transitionImageLayout(stagingBuffer, newImage, format, imageExtent);
@@ -70,7 +66,7 @@ namespace rub
 		return true;
 	}
 
-	void Texture::transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, VkFormat format, VkExtent3D imageExtent)
+	void Texture::transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent3D imageExtent)
 	{
 		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
 
@@ -118,9 +114,9 @@ namespace rub
 		device.endSingleTimeCommands(commandBuffer);
 	}
 
-	void Texture::createImageView(VkFormat format)
+	void Texture::createImageView(Format format)
 	{
-		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo(format, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo((VkFormat)format, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
 		vkCreateImageView(device.getDevice(), &imageinfo, nullptr, &imageView);
 	}
 

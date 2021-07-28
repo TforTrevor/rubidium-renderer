@@ -13,6 +13,7 @@ namespace rub
 
 		glm::mat4 getMatrix();
 		void rotate(glm::vec3 rotation);
+		void move(glm::vec3 movement);
 
 		glm::vec3 position;
 		glm::vec3 rotation;

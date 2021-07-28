@@ -16,6 +16,10 @@ namespace rub
 
 	void RubApp::run()
 	{
+		std::shared_ptr<Camera> camera = std::make_shared<Camera>(window);
+		renderer.setCamera(camera);
+		camera->setPosition(glm::vec3(0, 0, -3.0f));
+
 		VkRenderPass renderPass = renderer.getRenderPass();
 		SimpleRenderSystem renderSystem{ device, renderer.getSwapChain() };
 
@@ -25,6 +29,9 @@ namespace rub
 		while (!window.shouldClose())
 		{
 			glfwPollEvents();
+
+			camera->updatePosition(window);
+			camera->updateRotation(window);
 
 			double cpuTime = 0;
 
@@ -69,13 +76,13 @@ namespace rub
 		std::shared_ptr<Model> cube = std::make_shared<Model>(device, "models/cube.obj");
 		std::shared_ptr<Model> sphere = std::make_shared<Model>(device, "models/sphere.obj");
 
-		std::shared_ptr<Texture> blueWallAlbedo = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png", VK_FORMAT_R8G8B8A8_SRGB);
-		std::shared_ptr<Texture> blueWallNormal = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
-		std::shared_ptr<Texture> blueWallMask = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+		std::shared_ptr<Texture> blueWallAlbedo = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png", Texture::Format::SRGB);
+		std::shared_ptr<Texture> blueWallNormal = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Normal.png", Texture::Format::LINEAR);
+		std::shared_ptr<Texture> blueWallMask = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Roughness.png", Texture::Format::LINEAR);
 
-		std::shared_ptr<Texture> brickWallAlbedo = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png", VK_FORMAT_R8G8B8A8_SRGB);
-		std::shared_ptr<Texture> brickWallNormal = std::make_shared<Texture>(device, "textures/Bricks071_1K_Normal.png", VK_FORMAT_R8G8B8A8_UNORM);
-		std::shared_ptr<Texture> brickWallMask = std::make_shared<Texture>(device, "textures/Bricks071_1K_Roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+		std::shared_ptr<Texture> brickWallAlbedo = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png", Texture::Format::SRGB);
+		std::shared_ptr<Texture> brickWallNormal = std::make_shared<Texture>(device, "textures/Bricks071_1K_Normal.png", Texture::Format::LINEAR);
+		std::shared_ptr<Texture> brickWallMask = std::make_shared<Texture>(device, "textures/Bricks071_1K_Roughness.png", Texture::Format::LINEAR);
 
 		std::shared_ptr<Material> blueWallMaterial = std::make_shared<Material>(device, blueWallAlbedo, blueWallNormal, blueWallMask);
 		std::shared_ptr<Material> brickWallMaterial = std::make_shared<Material>(device, brickWallAlbedo, brickWallNormal, brickWallMask);
@@ -102,21 +109,21 @@ namespace rub
 		//object4.rotation = glm::vec3(0, glm::radians(180.0f), 0);
 		//object4.material = RenderObject::Material{ glm::vec4(0.5f, 1.0f, 1.0f, 1), glm::vec4(0, 1, 0, 0) };
 
-		//renderObjects.push_back(std::move(object));
-		//renderObjects.push_back(std::move(object2));
+		renderObjects.push_back(std::move(object));
+		renderObjects.push_back(std::move(object2));
 		//gameObjects.push_back(std::move(object3));
 		//gameObjects.push_back(std::move(object4));
 
-		int objectCount = 10000;
+		//int objectCount = 10000;
 
-		for (int i = 0; i < objectCount; i++)
-		{
-			RenderObject obj{};
-			obj.model = triangle;
-			obj.transform = Transform{ glm::vec3(0, -1.0f, 0), glm::vec3(0, 0.0f, 0) };
-			obj.material = blueWallMaterial;
-			renderObjects.push_back(std::move(obj));
-		}
+		//for (int i = 0; i < objectCount; i++)
+		//{
+		//	RenderObject obj{};
+		//	obj.model = triangle;
+		//	obj.transform = Transform{ glm::vec3(0, -1.0f, 0), glm::vec3(0, 0.0f, 0) };
+		//	obj.material = blueWallMaterial;
+		//	renderObjects.push_back(std::move(obj));
+		//}
 	}
 
 	RubApp::~RubApp()

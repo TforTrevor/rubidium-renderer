@@ -3,6 +3,7 @@
 #include "rub_window.hpp"
 #include "rub_device.hpp"
 #include "rub_swap_chain.hpp"
+#include "rub_camera.hpp"
 
 #include "global_descriptor.hpp"
 
@@ -32,6 +33,7 @@ namespace rub
 		void endRenderPass(VkCommandBuffer commandBuffer);
 		std::unique_ptr<SwapChain>& getSwapChain() { return swapChain; };
 		std::unique_ptr<GlobalDescriptor>& getGlobalDescriptor() { return globalDescriptor; };
+		void setCamera(std::shared_ptr<Camera> newCamera) { camera = newCamera; };
 
 	private:
 		Window& window;
@@ -44,6 +46,7 @@ namespace rub
 		
 		//GlobalDescriptor globalDescriptor;
 		std::unique_ptr<GlobalDescriptor> globalDescriptor;
+		std::shared_ptr<Camera> camera;
 
 		void createCommandBuffers();
 		void freeCommandBuffers();

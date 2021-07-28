@@ -18,6 +18,7 @@ namespace rub
 		bool wasWindowResized() { return framebufferResized; };
 		void resetWindowResizedFlag() { framebufferResized = false; };
 		void changeTitleSuffix(std::string suffix);
+		GLFWwindow* getWindow() { return window; };
 
 	private:
 		int width;

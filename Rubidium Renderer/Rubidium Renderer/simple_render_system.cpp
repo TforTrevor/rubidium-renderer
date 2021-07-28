@@ -66,7 +66,7 @@ namespace rub
 		{
 			auto& object = renderObjects[i];
 
-			//object.transform.rotate(glm::vec3(0, 0.4f, 0));
+			object.transform.rotate(glm::vec3(0, 0.4f, 0));
 
 			//model = glm::rotate(model, glm::radians(frameIndex * 0.4f), glm::vec3(0, 1, 0));
 

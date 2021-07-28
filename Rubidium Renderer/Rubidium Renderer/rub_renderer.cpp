@@ -101,18 +101,14 @@ namespace rub
 
 	void Renderer::updateCamera()
 	{
-		//camera position
-		glm::vec3 camPos = { 0.0f, 0.0f, -3.0f };
-
-		glm::mat4 view = glm::translate(glm::mat4(1.f), camPos);
-		//camera projection
-		glm::mat4 projection = glm::perspective(glm::radians(70.f), swapChain->getExtentAspectRatio(), 0.1f, 200.0f);
+		glm::mat4 view = camera->getMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(70.f), swapChain->getExtentAspectRatio(), 0.1f, 1000.0f);
 		projection[1][1] *= -1;
 
 		GlobalDescriptor::GPUCameraData cameraData{};
 		cameraData.view = view;
 		cameraData.projection = projection;
-		cameraData.position = glm::vec4(-camPos, 0);
+		cameraData.position = glm::vec4(camera->getPosition(), 0);
 
 		GlobalDescriptor::GPUSceneData sceneData{};
 		sceneData.ambientColor = glm::vec4(0.58f, 0.87f, 0.98f, 0);
@@ -120,9 +116,9 @@ namespace rub
 		sceneData.sunColor = glm::vec4(1.0f, 1.0f, 1.0f, 0);
 
 		GlobalDescriptor::GPULightData lightData{};
-		lightData.lightPositions[0] = glm::vec4(-1.5f, 0.0f, 3.0f, 0.0f);
-		lightData.lightPositions[1] = glm::vec4(1.5f, 0.0f, 3.0f, 0.0f);
-		lightData.lightPositions[2] = glm::vec4(0.0f, 2.0f, -2.0f, 0.0f);
+		lightData.lightPositions[0] = glm::vec4(-1.5f, 0.0f, -3.0f, 0.0f);
+		lightData.lightPositions[1] = glm::vec4(1.5f, 0.0f, -3.0f, 0.0f);
+		lightData.lightPositions[2] = glm::vec4(0.0f, 2.0f, 2.0f, 0.0f);
 		lightData.lightColors[0] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
 		lightData.lightColors[1] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
 		lightData.lightColors[2] = glm::vec4(0.5f, 0.5f, 1.0f, 25.0f);
@@ -170,7 +166,7 @@ namespace rub
 		renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
 		std::array<VkClearValue, 2> clearValues{};
-		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();

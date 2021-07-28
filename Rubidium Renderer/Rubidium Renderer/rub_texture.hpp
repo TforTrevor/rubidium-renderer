@@ -7,15 +7,21 @@ namespace rub
 	class Texture
 	{
 	public:
-		Texture(Device& device, const char* file, VkFormat format);
+		enum Format
+		{
+			SRGB = VK_FORMAT_R8G8B8A8_SRGB,
+			LINEAR = VK_FORMAT_R8G8B8A8_UNORM,
+			HDR = VK_FORMAT_R32G32B32A32_SFLOAT
+		};
+		Texture(Device& device, const char* file, Format format);
 		~Texture();
 
 		AllocatedImage getImage() { return allocatedImage; }
 		VkImageView getImageView() { return imageView; }
 	private:
-		bool createImage(const char* file, VkFormat format);
-		void transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, VkFormat format, VkExtent3D imageExtent);
-		void createImageView(VkFormat format);
+		bool createImage(const char* file, Format format);
+		void transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent3D imageExtent);
+		void createImageView(Format format);
 
 		Device& device;
 		AllocatedImage allocatedImage;

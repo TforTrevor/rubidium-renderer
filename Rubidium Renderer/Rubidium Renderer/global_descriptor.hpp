@@ -2,6 +2,7 @@
 
 #include "rub_device.hpp"
 #include "rub_swap_chain.hpp"
+#include "rub_texture.hpp"
 
 #include "glm/glm.hpp"
 
@@ -46,7 +47,10 @@ namespace rub
 		AllocatedBuffer cameraBuffer;
 		AllocatedBuffer sceneBuffer;
 		AllocatedBuffer lightBuffer;
+		VkSampler hdriSampler;
+		//std::shared_ptr<Texture> 
 		std::vector<VkDescriptorSet> globalDescriptors;
+
 
 		const int FRAME_COUNT;
 		int frameIndex = 0;
