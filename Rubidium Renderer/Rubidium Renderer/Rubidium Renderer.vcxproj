@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -119,7 +119,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(VULKAN_SDK)/Include;$(SolutionDir)/../tinyobjloader-2.0-rc1;$(SolutionDir)/../entt-3.7.1/src;$(SolutionDir)/../glfw-3.3.4.bin.WIN64/include;$(SolutionDir)/../glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -229,7 +229,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).frag.spv" "%(FullPath)"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename).frag.spv</Outputs>
@@ -244,7 +244,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile vertex shaders</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile vertex shaders</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vertex shaders</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin32\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename).vert.spv" "%(FullPath)"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vertex shaders</Message>
