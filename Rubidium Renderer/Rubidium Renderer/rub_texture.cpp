@@ -44,10 +44,9 @@ namespace rub
 
 
 
-		VkExtent3D imageExtent;
+		VkExtent2D imageExtent;
 		imageExtent.width = static_cast<uint32_t>(texWidth);
 		imageExtent.height = static_cast<uint32_t>(texHeight);
-		imageExtent.depth = 1;
 
 		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo((VkFormat)format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
@@ -66,7 +65,7 @@ namespace rub
 		return true;
 	}
 
-	void Texture::transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent3D imageExtent)
+	void Texture::transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent2D imageExtent)
 	{
 		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
 
@@ -97,7 +96,7 @@ namespace rub
 		copyRegion.imageSubresource.mipLevel = 0;
 		copyRegion.imageSubresource.baseArrayLayer = 0;
 		copyRegion.imageSubresource.layerCount = 1;
-		copyRegion.imageExtent = imageExtent;
+		copyRegion.imageExtent = { imageExtent.width, imageExtent.height, 1 };
 
 		//copy the buffer into the image
 		vkCmdCopyBufferToImage(commandBuffer, staging.buffer, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);

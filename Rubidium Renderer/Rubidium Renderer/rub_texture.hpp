@@ -20,7 +20,7 @@ namespace rub
 		VkImageView getImageView() { return imageView; }
 	private:
 		bool createImage(const char* file, Format format);
-		void transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent3D imageExtent);
+		void transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent2D imageExtent);
 		void createImageView(Format format);
 
 		Device& device;

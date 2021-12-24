@@ -1,7 +1,5 @@
 #pragma once
 
-#include "vulkan/vulkan.h"
-
 namespace rub
 {
 	class VkUtil
@@ -57,17 +55,14 @@ namespace rub
 			device.endSingleTimeCommands(commandBuffer);
 		}
 
-		static VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent)
+		static VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags usageFlags, VkExtent2D extent)
 		{
-			VkImageCreateInfo info = { };
+			VkImageCreateInfo info{};
 			info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 			info.pNext = nullptr;
-
 			info.imageType = VK_IMAGE_TYPE_2D;
-
 			info.format = format;
-			info.extent = extent;
-
+			info.extent = { extent.width, extent.height, 1 };
 			info.mipLevels = 1;
 			info.arrayLayers = 1;
 			info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -79,11 +74,9 @@ namespace rub
 
 		static VkImageViewCreateInfo imageViewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
 		{
-			//build a image-view for the depth image to use for rendering
-			VkImageViewCreateInfo info = {};
+			VkImageViewCreateInfo info{};
 			info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			info.pNext = nullptr;
-
 			info.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			info.image = image;
 			info.format = format;

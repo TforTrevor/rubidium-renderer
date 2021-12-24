@@ -211,6 +211,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rub_app.cpp" />
     <ClCompile Include="rub_camera.cpp" />
+    <ClCompile Include="rub_cubemap.cpp" />
     <ClCompile Include="rub_device.cpp" />
     <ClCompile Include="rub_material.cpp" />
     <ClCompile Include="rub_model.cpp" />
@@ -258,6 +259,7 @@
     <ClInclude Include="global_descriptor.hpp" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_camera.hpp" />
+    <ClInclude Include="rub_cubemap.hpp" />
     <ClInclude Include="rub_device.hpp" />
     <ClInclude Include="rub_material.hpp" />
     <ClInclude Include="rub_render_object.hpp" />
