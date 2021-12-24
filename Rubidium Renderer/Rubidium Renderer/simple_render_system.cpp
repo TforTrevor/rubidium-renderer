@@ -54,7 +54,7 @@ namespace rub
 		}
 	}
 
-	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor, VkRenderPass& renderPass)
+	void SimpleRenderSystem::renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor)
 	{
 		VkDescriptorSetLayout globalLayout = globalDescriptor->getLayout();
 
@@ -86,7 +86,7 @@ namespace rub
 			{
 				if (!object.material->isReady())
 				{
-					object.material->setup(globalLayout, objectLayout, renderPass);
+					object.material->setup(globalLayout, objectLayout);
 				}
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->getLayout(), 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
 				globalDescriptor->bind(commandBuffer, object.material->getLayout());

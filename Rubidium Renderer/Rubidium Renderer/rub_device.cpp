@@ -64,6 +64,11 @@ namespace rub
 
 	void Device::createInstance()
 	{
+		if (volkInitialize() != VK_SUCCESS)
+		{
+			throw std::runtime_error("volk could not initialize");
+		}
+
 		if (enableValidationLayers && !checkValidationLayerSupport())
 		{
 			throw std::runtime_error("validation layers requested, but not available!");
@@ -75,7 +80,7 @@ namespace rub
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -104,6 +109,8 @@ namespace rub
 		{
 			throw std::runtime_error("failed to create instance!");
 		}
+
+		volkLoadInstance(instance);
 
 		hasGflwRequiredInstanceExtensions();
 	}
@@ -168,9 +175,13 @@ namespace rub
 		}
 
 		VkPhysicalDeviceFeatures deviceFeatures{};
+		VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRendering{};
+		dynamicRendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+		dynamicRendering.dynamicRendering = true;
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		createInfo.pNext = &dynamicRendering;
 
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -194,6 +205,8 @@ namespace rub
 		{
 			throw std::runtime_error("failed to create logical device!");
 		}
+
+		volkLoadDevice(device);
 
 		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
@@ -338,6 +351,8 @@ namespace rub
 		{
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
+		
+		extensions.insert(extensions.end(), instanceExtensions.begin(), instanceExtensions.end());
 
 		return extensions;
 	}
@@ -452,30 +467,37 @@ namespace rub
 	}
 
 
-	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	//void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	//{
+	//	if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to create image!");
+	//	}
+
+	//	VkMemoryRequirements memRequirements;
+	//	vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+	//	VkMemoryAllocateInfo allocInfo{};
+	//	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	//	allocInfo.allocationSize = memRequirements.size;
+	//	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+	//	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to allocate image memory!");
+	//	}
+
+	//	if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to bind image memory!");
+	//	}
+	//}
+
+	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VmaMemoryUsage memoryUsage, AllocatedImage& image)
 	{
-		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create image!");
-		}
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device, image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate image memory!");
-		}
-
-		if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to bind image memory!");
-		}
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = memoryUsage;
+		vmaCreateImage(getAllocator(), &imageInfo, &allocationInfo, &image.image, &image.allocation, nullptr);
 	}
 
 	void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer)
@@ -565,11 +587,36 @@ namespace rub
 
 	void Device::createAllocator()
 	{
+		VmaVulkanFunctions vulkanFunctions{};
+		vulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+		vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+		vulkanFunctions.vkAllocateMemory = vkAllocateMemory;
+		vulkanFunctions.vkFreeMemory = vkFreeMemory;
+		vulkanFunctions.vkMapMemory = vkMapMemory; 
+		vulkanFunctions.vkUnmapMemory = vkUnmapMemory;
+		vulkanFunctions.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
+		vulkanFunctions.vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges;
+		vulkanFunctions.vkBindBufferMemory = vkBindBufferMemory; 
+		vulkanFunctions.vkBindImageMemory = vkBindImageMemory; 
+		vulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements; 
+		vulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements; 
+		vulkanFunctions.vkCreateBuffer = vkCreateBuffer; 
+		vulkanFunctions.vkDestroyBuffer = vkDestroyBuffer; 
+		vulkanFunctions.vkCreateImage = vkCreateImage; 
+		vulkanFunctions.vkDestroyImage = vkDestroyImage; 
+		vulkanFunctions.vkCmdCopyBuffer = vkCmdCopyBuffer; 
+		vulkanFunctions.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR; 
+		vulkanFunctions.vkGetImageMemoryRequirements2KHR = vkGetImageMemoryRequirements2KHR; 
+		vulkanFunctions.vkBindBufferMemory2KHR = vkBindBufferMemory2KHR; 
+		vulkanFunctions.vkBindImageMemory2KHR = vkBindImageMemory2KHR;
+		vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2KHR;
+
 		VmaAllocatorCreateInfo allocatorInfo = {};
 		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 		allocatorInfo.physicalDevice = physicalDevice;
 		allocatorInfo.device = device;
 		allocatorInfo.instance = instance;
+		allocatorInfo.pVulkanFunctions = (const VmaVulkanFunctions*)&vulkanFunctions;
 
 		vmaCreateAllocator(&allocatorInfo, &allocator);
 	}

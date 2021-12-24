@@ -15,8 +15,10 @@ namespace rub
 		SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
 		~SwapChain();
 
-		VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
-		VkRenderPass getRenderPass() { return renderPass; }
+		VkImageView getColorAttachment() { return swapChainImageViews[currentFrame]; }
+		VkImageView getDepthAttachment() { return depthImageViews[currentFrame]; }
+		//VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
+		//VkRenderPass getRenderPass() { return renderPass; }
 		VkImageView getImageView(int index) { return swapChainImageViews[index]; }
 		size_t imageCount() { return swapChainImages.size(); }
 		VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
@@ -34,14 +36,13 @@ namespace rub
 		VkFormat swapChainImageFormat;
 		VkExtent2D swapChainExtent;
 
-		std::vector<VkFramebuffer> swapChainFramebuffers;
-		VkRenderPass renderPass;
+		//std::vector<VkFramebuffer> swapChainFramebuffers;
+		//VkRenderPass renderPass;
 
-		std::vector<VkImage> depthImages;
-		std::vector<VkDeviceMemory> depthImageMemorys;
-		std::vector<VkImageView> depthImageViews;
 		std::vector<VkImage> swapChainImages;
 		std::vector<VkImageView> swapChainImageViews;
+		std::vector<AllocatedImage> depthImages;
+		std::vector<VkImageView> depthImageViews;
 
 		Device& device;
 		VkExtent2D windowExtent;

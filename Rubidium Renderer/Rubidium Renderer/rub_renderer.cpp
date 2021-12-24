@@ -157,21 +157,25 @@ namespace rub
 		assert(isFrameStarted && "can't call beginRenderPass if frame isn't in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() && "can't end render pass on command buffer from a different frame");
 
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = swapChain->getRenderPass();
-		renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
+		//VkRenderPassBeginInfo renderPassInfo{};
+		//renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		//renderPassInfo.renderPass = swapChain->getRenderPass();
+		//renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
 
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
+		//renderPassInfo.renderArea.offset = { 0, 0 };
+		//renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 
-		std::array<VkClearValue, 2> clearValues{};
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
+		//std::array<VkClearValue, 2> clearValues{};
+		//clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		//clearValues[1].depthStencil = { 1.0f, 0 };
+		//renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		//renderPassInfo.pClearValues = clearValues.data();
 
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		//vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkClearValue clearValue{};
+		clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValue.depthStencil = { 1.0f, 0 };
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
@@ -183,6 +187,34 @@ namespace rub
 		VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+		VkRenderingAttachmentInfoKHR colorAttachment{};
+		colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		colorAttachment.imageView = swapChain->getColorAttachment();
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.clearValue = clearValue;
+
+		VkRenderingAttachmentInfoKHR depthAttachment{};
+		depthAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+		depthAttachment.imageView = swapChain->getDepthAttachment();
+		depthAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAttachment.clearValue = clearValue;
+
+		VkRenderingInfoKHR renderingInfo{};
+		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+		renderingInfo.renderArea = scissor;
+		renderingInfo.layerCount = 1;
+		renderingInfo.viewMask = 0;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.pDepthAttachment = &depthAttachment;
+		renderingInfo.pStencilAttachment = nullptr;
+
+		vkCmdBeginRenderingKHR(commandBuffer, &renderingInfo);
 	}
 
 	void Renderer::endRenderPass(VkCommandBuffer commandBuffer)
@@ -190,7 +222,8 @@ namespace rub
 		assert(isFrameStarted && "can't call endRenderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() && "can't end render pass on command buffer from a different frame");
 		
-		vkCmdEndRenderPass(commandBuffer);
+		//vkCmdEndRenderPass(commandBuffer);
+		vkCmdEndRenderingKHR(commandBuffer);
 	}
 
 	Renderer::~Renderer()

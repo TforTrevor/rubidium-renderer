@@ -15,14 +15,14 @@ namespace rub
 		~Material();
 
 		bool isReady() { return pipelineLayout != nullptr && pipeline != nullptr; };
-		void setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout, VkRenderPass renderPass);
+		void setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout);
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipelineLayout getLayout() { return pipelineLayout; };
 		
 	private:
 		void createBuffers();
 		void createPipelineLayout(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout);
-		void createPipeline(VkRenderPass renderPass);
+		void createPipeline();
 
 		Device& device;
 

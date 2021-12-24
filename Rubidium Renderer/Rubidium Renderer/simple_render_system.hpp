@@ -31,7 +31,7 @@ namespace rub
 		SimpleRenderSystem(Device& device, std::unique_ptr<SwapChain>& swapChain);
 		~SimpleRenderSystem();
 
-		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor, VkRenderPass& renderPass);
+		void renderModels(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, std::unique_ptr<GlobalDescriptor>& globalDescriptor);
 
 	private:
 		Device& device;

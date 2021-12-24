@@ -25,10 +25,10 @@ namespace rub
 		createBuffers();
 	}
 
-	void Material::setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout, VkRenderPass renderPass)
+	void Material::setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout)
 	{
 		createPipelineLayout(globalLayout, objectSetLayout);
-		createPipeline(renderPass);
+		createPipeline();
 	}
 
 	void Material::createBuffers()
@@ -73,11 +73,11 @@ namespace rub
 		vkCreatePipelineLayout(device.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 	}
 
-	void Material::createPipeline(VkRenderPass renderPass)
+	void Material::createPipeline()
 	{
 		PipelineConfigInfo pipelineConfig{};
 		Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-		pipelineConfig.renderPass = renderPass;
+		//pipelineConfig.renderPass = nullptr;
 		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
 		pipelineConfig.pipelineLayout = pipelineLayout;
 		pipeline = std::make_unique<Pipeline>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);

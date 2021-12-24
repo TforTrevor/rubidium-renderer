@@ -19,7 +19,7 @@ namespace rub
 		Renderer(Window& window, Device& device);
 		~Renderer();
 
-		VkRenderPass getRenderPass() const { return swapChain->getRenderPass(); }
+		//VkRenderPass getRenderPass() const { return swapChain->getRenderPass(); }
 		bool isFrameInProgress() const { return isFrameStarted; }
 		VkCommandBuffer getCurrentCommandBuffer()
 		{

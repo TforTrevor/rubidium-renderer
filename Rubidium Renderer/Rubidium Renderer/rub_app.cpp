@@ -20,7 +20,7 @@ namespace rub
 		renderer.setCamera(camera);
 		camera->setPosition(glm::vec3(0, 0, -3.0f));
 
-		VkRenderPass renderPass = renderer.getRenderPass();
+		//VkRenderPass renderPass = renderer.getRenderPass();
 		SimpleRenderSystem renderSystem{ device, renderer.getSwapChain() };
 
 		double lastTime = glfwGetTime();
@@ -42,7 +42,7 @@ namespace rub
 				
 				auto cpuTime1 = high_resolution_clock::now();
 				renderer.beginRenderPass(commandBuffer);
-				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor(), renderPass);
+				renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor());
 				renderer.endRenderPass(commandBuffer);
 				auto cpuTime2 = high_resolution_clock::now();
 				duration<double, std::milli> cpuTimeMs = cpuTime2 - cpuTime1;

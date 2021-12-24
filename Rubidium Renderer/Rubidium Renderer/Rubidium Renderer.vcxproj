@@ -125,7 +125,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)/../glfw-3.3.4.bin.WIN64/lib-vc2019;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>
@@ -221,6 +221,7 @@
     <ClCompile Include="rub_transform.cpp" />
     <ClCompile Include="rub_window.cpp" />
     <ClCompile Include="simple_render_system.cpp" />
+    <ClCompile Include="volk.c" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\shader.frag">
@@ -272,6 +273,7 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="vk_util.hpp" />
     <ClInclude Include="vk_mem_alloc.h" />
+    <ClInclude Include="volk.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

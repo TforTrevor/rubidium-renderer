@@ -130,7 +130,6 @@ namespace rub
 		VkExtent2D swapChainExtent = getSwapChainExtent();
 
 		depthImages.resize(imageCount());
-		depthImageMemorys.resize(imageCount());
 		depthImageViews.resize(imageCount());
 
 		for (int i = 0; i < depthImages.size(); i++)
@@ -151,11 +150,11 @@ namespace rub
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.flags = 0;
 
-			device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i], depthImageMemorys[i]);
+			device.createImageWithInfo(imageInfo, VMA_MEMORY_USAGE_GPU_ONLY, depthImages[i]);
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = depthImages[i];
+			viewInfo.image = depthImages[i].image;
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			viewInfo.format = depthFormat;
 			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -225,38 +224,38 @@ namespace rub
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		if (vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create render pass!");
-		}
+		//if (vkCreateRenderPass(device.getDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+		//{
+		//	throw std::runtime_error("failed to create render pass!");
+		//}
 	}
 
 	void SwapChain::createFramebuffers()
 	{
-		swapChainFramebuffers.resize(imageCount());
-		for (size_t i = 0; i < imageCount(); i++)
-		{
-			std::array<VkImageView, 2> attachments = { swapChainImageViews[i], depthImageViews[i] };
+		//swapChainFramebuffers.resize(imageCount());
+		//for (size_t i = 0; i < imageCount(); i++)
+		//{
+		//	std::array<VkImageView, 2> attachments = { swapChainImageViews[i], depthImageViews[i] };
 
-			VkExtent2D swapChainExtent = getSwapChainExtent();
-			VkFramebufferCreateInfo framebufferInfo = {};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = renderPass;
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
-			framebufferInfo.layers = 1;
+		//	VkExtent2D swapChainExtent = getSwapChainExtent();
+		//	VkFramebufferCreateInfo framebufferInfo = {};
+		//	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		//	framebufferInfo.renderPass = renderPass;
+		//	framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		//	framebufferInfo.pAttachments = attachments.data();
+		//	framebufferInfo.width = swapChainExtent.width;
+		//	framebufferInfo.height = swapChainExtent.height;
+		//	framebufferInfo.layers = 1;
 
-			if (vkCreateFramebuffer(
-				device.getDevice(),
-				&framebufferInfo,
-				nullptr,
-				&swapChainFramebuffers[i]) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to create framebuffer!");
-			}
-		}
+		//	if (vkCreateFramebuffer(
+		//		device.getDevice(),
+		//		&framebufferInfo,
+		//		nullptr,
+		//		&swapChainFramebuffers[i]) != VK_SUCCESS)
+		//	{
+		//		throw std::runtime_error("failed to create framebuffer!");
+		//	}
+		//}
 	}
 
 	void SwapChain::createSyncObjects()
@@ -422,16 +421,16 @@ namespace rub
 		for (int i = 0; i < depthImages.size(); i++)
 		{
 			vkDestroyImageView(device.getDevice(), depthImageViews[i], nullptr);
-			vkDestroyImage(device.getDevice(), depthImages[i], nullptr);
-			vkFreeMemory(device.getDevice(), depthImageMemorys[i], nullptr);
+			vkDestroyImage(device.getDevice(), depthImages[i].image, nullptr);
+			vmaFreeMemory(device.getAllocator(), depthImages[i].allocation);
 		}
 
-		for (auto framebuffer : swapChainFramebuffers)
-		{
-			vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
-		}
+		//for (auto framebuffer : swapChainFramebuffers)
+		//{
+		//	vkDestroyFramebuffer(device.getDevice(), framebuffer, nullptr);
+		//}
 
-		vkDestroyRenderPass(device.getDevice(), renderPass, nullptr);
+		//vkDestroyRenderPass(device.getDevice(), renderPass, nullptr);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
