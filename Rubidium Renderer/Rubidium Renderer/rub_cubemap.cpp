@@ -16,22 +16,22 @@ namespace rub
 
 	void Cubemap::createImages()
 	{
-		const int imageCount = 6;
+		const int imageCount = 1;
 		captureImages.resize(imageCount);
 		captureImageViews.resize(imageCount);
 		for (int i = 0; i < imageCount; i++)
 		{
 			VkImageCreateInfo imageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, captureExtent);
-			//imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-			//imageInfo.arrayLayers = 6;
+			imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+			imageInfo.arrayLayers = 6;
 
 			VmaAllocationCreateInfo allocationInfo = {};
 			allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			vmaCreateImage(device.getAllocator(), &imageInfo, &allocationInfo, &captureImages[i].image, &captureImages[i].allocation, nullptr);
 
 			VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, captureImages[i].image, VK_IMAGE_ASPECT_COLOR_BIT);
-			//viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-			//viewInfo.subresourceRange.layerCount = 6;
+			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+			viewInfo.subresourceRange.layerCount = 6;
 
 			if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &captureImageViews[i]) != VK_SUCCESS)
 			{
@@ -69,8 +69,19 @@ namespace rub
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+		unsigned int viewMask = 0b00111111;
+		unsigned int correlationMask = 0b00000000;
+
+		VkRenderPassMultiviewCreateInfo multiviewInfo{};
+		multiviewInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+		multiviewInfo.subpassCount = 1;
+		multiviewInfo.pViewMasks = &viewMask;
+		multiviewInfo.correlationMaskCount = 1;
+		multiviewInfo.pCorrelationMasks = &correlationMask;
+
 		VkRenderPassCreateInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.pNext = &multiviewInfo;
 		renderPassInfo.attachmentCount = 1;
 		renderPassInfo.pAttachments = &colorAttachment;
 		renderPassInfo.subpassCount = 1;

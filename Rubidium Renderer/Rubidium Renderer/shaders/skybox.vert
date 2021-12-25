@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_EXT_multiview : enable
 
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
@@ -16,7 +17,7 @@ void main()
 {
     outPos = inPos;
 
-    mat4 rotView = mat4(mat3(cameraData.view[0])); // remove translation from the view matrix
+    mat4 rotView = mat4(mat3(cameraData.view[gl_ViewIndex])); // remove translation from the view matrix
     vec4 clipPos = cameraData.projection * rotView * vec4(outPos, 1.0);
 
     gl_Position = clipPos.xyww;
