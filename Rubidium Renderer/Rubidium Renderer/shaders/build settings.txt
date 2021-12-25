@@ -1,0 +1,3 @@
+$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"
+Compiling shaders
+%(RootDir)%(Directory)%(Filename)%(Extension).spv

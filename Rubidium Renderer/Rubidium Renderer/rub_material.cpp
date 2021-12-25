@@ -4,31 +4,42 @@
 
 namespace rub
 {
-	Material::Material(Device& device, std::shared_ptr<Texture> albedo, std::shared_ptr<Texture> normalMap, std::shared_ptr<Texture> maskMap) 
-		: device{ device }, albedo{ albedo }, normalMap{ normalMap }, maskMap{ maskMap }
+	Material::Material(Device& device, const std::string& vertexPath, const std::string& fragPath) : device{ device }, vertPath{ vertexPath }, fragPath{ fragPath }
 	{
-		VkDescriptorSetLayoutBinding albedoBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-		VkDescriptorSetLayoutBinding normalBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-		VkDescriptorSetLayoutBinding maskBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 
-		VkDescriptorSetLayoutBinding textureBinding[] = { albedoBinding, normalBinding, maskBinding };
+	}
+
+	void Material::addTexture(std::shared_ptr<Texture> texture)
+	{
+		textures.push_back(texture);
+	}
+
+	void Material::setup(std::vector<VkDescriptorSetLayout>& setLayouts, VkRenderPass renderPass)
+	{
+		createDescriptorSetLayout();
+		createPipelineLayout(setLayouts);
+		createPipeline(renderPass);
+	}
+
+	void Material::createDescriptorSetLayout()
+	{
+		std::vector<VkDescriptorSetLayoutBinding> textureBindings;
+		textureBindings.resize(textures.size());
+		for (int i = 0; i < textures.size(); i++)
+		{
+			textureBindings[i] = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, i);
+		}
 
 		VkDescriptorSetLayoutCreateInfo textureLayoutInfo = {};
 		textureLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		textureLayoutInfo.pNext = nullptr;
-		textureLayoutInfo.bindingCount = 3;
+		textureLayoutInfo.bindingCount = textureBindings.size();
 		textureLayoutInfo.flags = 0;
-		textureLayoutInfo.pBindings = textureBinding;
+		textureLayoutInfo.pBindings = textureBindings.data();
 
 		vkCreateDescriptorSetLayout(device.getDevice(), &textureLayoutInfo, nullptr, &textureSetLayout);
 
 		createBuffers();
-	}
-
-	void Material::setup(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout, VkRenderPass renderPass)
-	{
-		createPipelineLayout(globalLayout, objectSetLayout);
-		createPipeline(renderPass);
 	}
 
 	void Material::createBuffers()
@@ -36,40 +47,34 @@ namespace rub
 		VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		device.getDescriptor(textureSetLayout, textureDescriptor);
 
-		vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &albedoSampler);
-		VkDescriptorImageInfo albedoInfo;
-		albedoInfo.sampler = albedoSampler;
-		albedoInfo.imageView = albedo->getImageView();
-		albedoInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		
-		vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &normalSampler);
-		VkDescriptorImageInfo normalInfo;
-		normalInfo.sampler = normalSampler;
-		normalInfo.imageView = normalMap->getImageView();
-		normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		std::vector<VkWriteDescriptorSet> descriptors;
+		descriptors.resize(textures.size());
+		textureSamplers.resize(textures.size());
+		for (int i = 0; i < textures.size(); i++)
+		{
+			vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &textureSamplers[i]);
+			VkDescriptorImageInfo info{};
+			info.sampler = textureSamplers[i];
+			info.imageView = textures[i]->getImageView();
+			info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &maskSampler);
-		VkDescriptorImageInfo maskInfo;
-		maskInfo.sampler = maskSampler;
-		maskInfo.imageView = maskMap->getImageView();
-		maskInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			descriptors[i] = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, &info, i);
+		}
 
-		VkWriteDescriptorSet albedoDescriptor = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, &albedoInfo, 0);
-		VkWriteDescriptorSet normalDescriptor = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, &normalInfo, 1);
-		VkWriteDescriptorSet maskDescriptor = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, &maskInfo, 2);
-		VkWriteDescriptorSet textureDescriptors[] = { albedoDescriptor, normalDescriptor, maskDescriptor };
-
-		vkUpdateDescriptorSets(device.getDevice(), 3, textureDescriptors, 0, nullptr);
+		vkUpdateDescriptorSets(device.getDevice(), textures.size(), descriptors.data(), 0, nullptr);
 	}
 
-	void Material::createPipelineLayout(VkDescriptorSetLayout& globalLayout, VkDescriptorSetLayout& objectSetLayout)
+	void Material::createPipelineLayout(std::vector<VkDescriptorSetLayout>& setLayouts)
 	{
-		VkDescriptorSetLayout setLayouts[] = { globalLayout, objectSetLayout, textureSetLayout };
+		std::vector<VkDescriptorSetLayout> finalSet;
+		finalSet.insert(finalSet.end(), setLayouts.begin(), setLayouts.end());
+		finalSet.push_back(textureSetLayout);
+		descriptorSetCount = finalSet.size();
 
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 3;
-		pipelineLayoutInfo.pSetLayouts = setLayouts;
+		pipelineLayoutInfo.setLayoutCount = finalSet.size();
+		pipelineLayoutInfo.pSetLayouts = finalSet.data();
 		vkCreatePipelineLayout(device.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 	}
 
@@ -80,20 +85,21 @@ namespace rub
 		pipelineConfig.renderPass = renderPass;
 		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
 		pipelineConfig.pipelineLayout = pipelineLayout;
-		pipeline = std::make_unique<Pipeline>(device, "shaders/shader.vert.spv", "shaders/shader.frag.spv", pipelineConfig);
+		pipeline = std::make_unique<Pipeline>(device, vertPath, fragPath, pipelineConfig);
 	}
 
 	void Material::bind(VkCommandBuffer commandBuffer)
 	{
 		pipeline->bind(commandBuffer);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1, &textureDescriptor, 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, descriptorSetCount - 1, 1, &textureDescriptor, 0, nullptr);
 	}
 
 	Material::~Material()
 	{
-		vkDestroySampler(device.getDevice(), albedoSampler, nullptr);
-		vkDestroySampler(device.getDevice(), normalSampler, nullptr);
-		vkDestroySampler(device.getDevice(), maskSampler, nullptr);
+		for (VkSampler& sampler : textureSamplers)
+		{
+			vkDestroySampler(device.getDevice(), sampler, nullptr);
+		}
 		vkDestroyDescriptorSetLayout(device.getDevice(), textureSetLayout, nullptr);
 		if (isReady())
 			vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);

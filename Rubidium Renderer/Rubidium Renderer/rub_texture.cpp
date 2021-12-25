@@ -2,6 +2,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h""
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
 
 #include <iostream>
 
@@ -9,28 +11,72 @@
 
 namespace rub
 {
-	Texture::Texture(Device& device, const char* file, Format format) : device{ device }
+	Texture::Texture(Device& device, const std::string& file, Format format) : device{ device }
 	{
-		if (createImage(file, format))
+		if (format == Format::HDR)
 		{
-			createImageView(format);
+			if (createHDRImage(file))
+				createImageView(format);
+		}
+		else
+		{
+			if (createSDRImage(file, format))
+				createImageView(format);
 		}		
 	}
 
-	bool Texture::createImage(const char* file, Format format)
+	bool Texture::createHDRImage(const std::string& file)
+	{
+		float* pixels; // width * height * RGBA
+		int width, height;
+		const char* err = nullptr;
+
+		int ret = LoadEXR(&pixels, &width, &height, file.c_str(), &err);
+
+		if (ret != TINYEXR_SUCCESS)
+		{
+			if (err)
+			{
+				fprintf(stderr, "ERR : %s\n", err);
+				FreeEXRErrorMessage(err); // release memory of error message.
+			}
+
+			return false;
+		}
+		else
+		{
+			VkDeviceSize imageSize = width * height * sizeof(pixels[0]) * 4;
+
+			AllocatedBuffer stagingBuffer;
+			device.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
+
+			void* data;
+			vmaMapMemory(device.getAllocator(), stagingBuffer.allocation, &data);
+			memcpy(data, pixels, static_cast<size_t>(imageSize));
+			vmaUnmapMemory(device.getAllocator(), stagingBuffer.allocation);
+
+			free(pixels);
+
+			transferToGPU(width, height, Format::HDR, stagingBuffer);
+
+			return true;
+		}
+	}
+
+	bool Texture::createSDRImage(const std::string& file, Format format)
 	{
 		int texWidth, texHeight, texChannels;
 
-		stbi_uc* pixels = stbi_load(file, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(file.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 		if (!pixels)
 		{
 			std::cout << "Failed to load texture file " << file << std::endl;
-			return true;
+			return false;
 		}
 
 		void* pixel_ptr = pixels;
-		VkDeviceSize imageSize = texWidth * texHeight * 4;
+		VkDeviceSize imageSize = texWidth * texHeight * sizeof(pixels[0]) * 4;
 
 		AllocatedBuffer stagingBuffer;
 		device.createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, stagingBuffer);
@@ -42,11 +88,16 @@ namespace rub
 
 		stbi_image_free(pixels);
 
+		transferToGPU(texWidth, texHeight, format, stagingBuffer);		
 
+		return true;
+	}
 
+	void Texture::transferToGPU(const int width, const int height, Format format, AllocatedBuffer& stagingBuffer)
+	{
 		VkExtent2D imageExtent;
-		imageExtent.width = static_cast<uint32_t>(texWidth);
-		imageExtent.height = static_cast<uint32_t>(texHeight);
+		imageExtent.width = static_cast<uint32_t>(width);
+		imageExtent.height = static_cast<uint32_t>(height);
 
 		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo((VkFormat)format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
 
@@ -61,8 +112,6 @@ namespace rub
 		vmaDestroyBuffer(device.getAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
 
 		allocatedImage = newImage;
-
-		return true;
 	}
 
 	void Texture::transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent2D imageExtent)

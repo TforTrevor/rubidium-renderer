@@ -13,13 +13,15 @@ namespace rub
 			LINEAR = VK_FORMAT_R8G8B8A8_UNORM,
 			HDR = VK_FORMAT_R32G32B32A32_SFLOAT
 		};
-		Texture(Device& device, const char* file, Format format);
+		Texture(Device& device, const std::string& file, Format format);
 		~Texture();
 
 		AllocatedImage getImage() { return allocatedImage; }
 		VkImageView getImageView() { return imageView; }
 	private:
-		bool createImage(const char* file, Format format);
+		bool createHDRImage(const std::string& file);
+		bool createSDRImage(const std::string& file, Format format);
+		void transferToGPU(const int width, const int height, Format format, AllocatedBuffer& stagingBuffer);
 		void transitionImageLayout(AllocatedBuffer staging, AllocatedImage newImage, Format format, VkExtent2D imageExtent);
 		void createImageView(Format format);
 

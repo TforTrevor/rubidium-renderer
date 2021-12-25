@@ -7,6 +7,7 @@
 #include "rub_render_object.hpp"
 #include "rub_renderer.hpp"
 #include "rub_texture.hpp"
+#include "rub_scene.hpp"
 
 #include <memory>
 #include <vector>
@@ -31,6 +32,7 @@ namespace rub
 		Renderer renderer{ window, device };
 
 		std::vector<RenderObject> renderObjects;
+		std::unique_ptr<Scene> scene;
 
 		void loadObjects();
 	};
