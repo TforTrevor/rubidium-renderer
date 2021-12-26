@@ -16,27 +16,21 @@ namespace rub
 
 	void Cubemap::createImages()
 	{
-		const int imageCount = 1;
-		captureImages.resize(imageCount);
-		captureImageViews.resize(imageCount);
-		for (int i = 0; i < imageCount; i++)
+		VkImageCreateInfo imageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, captureExtent);
+		imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		imageInfo.arrayLayers = 6;
+
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		vmaCreateImage(device.getAllocator(), &imageInfo, &allocationInfo, &captureImage.image, &captureImage.allocation, nullptr);
+
+		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, captureImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		viewInfo.subresourceRange.layerCount = 6;
+
+		if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &captureImageView) != VK_SUCCESS)
 		{
-			VkImageCreateInfo imageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, captureExtent);
-			imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-			imageInfo.arrayLayers = 6;
-
-			VmaAllocationCreateInfo allocationInfo = {};
-			allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-			vmaCreateImage(device.getAllocator(), &imageInfo, &allocationInfo, &captureImages[i].image, &captureImages[i].allocation, nullptr);
-
-			VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, captureImages[i].image, VK_IMAGE_ASPECT_COLOR_BIT);
-			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-			viewInfo.subresourceRange.layerCount = 6;
-
-			if (vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &captureImageViews[i]) != VK_SUCCESS)
-			{
-				throw std::runtime_error("failed to create texture image view!");
-			}
+			throw std::runtime_error("failed to create texture image view!");
 		}
 	}
 
@@ -101,7 +95,7 @@ namespace rub
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &captureImageViews[0];
+		framebufferInfo.pAttachments = &captureImageView;
 		framebufferInfo.width = captureExtent.width;
 		framebufferInfo.height = captureExtent.height;
 		framebufferInfo.layers = 1;
@@ -207,21 +201,112 @@ namespace rub
 		}
 
 		vkCmdEndRenderPass(commandBuffer);
-		device.endSingleTimeCommands(commandBuffer);
-	}
 
-	Cubemap::~Cubemap()
-	{
-		for (AllocatedImage& image : captureImages)
+		convertImage(commandBuffer);
+
+		device.endSingleTimeCommands(commandBuffer);
+
+		for (AllocatedImage& image : destroyImages)
 		{
 			vmaDestroyImage(device.getAllocator(), image.image, image.allocation);
 		}
 
-		for (VkImageView& imageView : captureImageViews)
+		for (VkImageView& imageView : destroyImageViews)
 		{
 			vkDestroyImageView(device.getDevice(), imageView, nullptr);
 		}
+	}
 
+	void Cubemap::convertImage(VkCommandBuffer commandBuffer)
+	{
+		//Transfer old image layout from color attachment to transfer source
+		VkImageSubresourceRange colorRange{};
+		colorRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		colorRange.baseMipLevel = 0;
+		colorRange.levelCount = 1;
+		colorRange.baseArrayLayer = 0;
+		colorRange.layerCount = 6;
+
+		VkImageMemoryBarrier colorToSource{};
+		colorToSource.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		colorToSource.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorToSource.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		colorToSource.image = captureImage.image;
+		colorToSource.subresourceRange = colorRange;
+		colorToSource.srcAccessMask = 0;
+		colorToSource.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorToSource);
+
+		//Create new image with shader read layout
+		AllocatedImage newImage;
+		VkImageCreateInfo newImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, captureExtent);
+		newImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		newImageInfo.arrayLayers = 6;
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		vmaCreateImage(device.getAllocator(), &newImageInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
+
+		//Transfer new image layout from undefined to transfer destination
+		VkImageSubresourceRange undefinedRange{};
+		undefinedRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		undefinedRange.baseMipLevel = 0;
+		undefinedRange.levelCount = 1;
+		undefinedRange.baseArrayLayer = 0;
+		undefinedRange.layerCount = 6;
+
+		VkImageMemoryBarrier undefinedToDst{};
+		undefinedToDst.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		undefinedToDst.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		undefinedToDst.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		undefinedToDst.image = newImage.image;
+		undefinedToDst.subresourceRange = undefinedRange;
+		undefinedToDst.srcAccessMask = 0;
+		undefinedToDst.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &undefinedToDst);
+
+		//Copy the old image into the new image
+		VkImageSubresourceLayers subresourceLayers{};
+		subresourceLayers.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceLayers.mipLevel = 0;
+		subresourceLayers.baseArrayLayer = 0;
+		subresourceLayers.layerCount = 6;
+
+		VkImageCopy imageCopy{};
+		imageCopy.srcSubresource = subresourceLayers;
+		imageCopy.dstSubresource = subresourceLayers;
+		imageCopy.srcOffset = { 0, 0, 0 };
+		imageCopy.dstOffset = { 0, 0, 0 };
+		imageCopy.extent = { captureExtent.width, captureExtent.height, 1 };
+
+		vkCmdCopyImage(commandBuffer, captureImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);
+
+		//Destroy old image and image view
+		destroyImages.push_back(captureImage);
+		destroyImageViews.push_back(captureImageView);
+
+		//Assign new image and create new image view
+		captureImage = newImage;
+		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, captureImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		viewInfo.subresourceRange.layerCount = 6;
+		vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &captureImageView);
+
+		//Transition image layout from transfer destination to shader read
+		VkImageMemoryBarrier toReadable = undefinedToDst;
+		toReadable.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		toReadable.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		toReadable.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		toReadable.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
+	}
+
+	Cubemap::~Cubemap()
+	{
+		vmaDestroyImage(device.getAllocator(), captureImage.image, captureImage.allocation);
+		vkDestroyImageView(device.getDevice(), captureImageView, nullptr);
 		vkDestroyFramebuffer(device.getDevice(), captureFramebuffer, nullptr);
 		vkDestroyRenderPass(device.getDevice(), renderPass, nullptr);
 		vkDestroyDescriptorSetLayout(device.getDevice(), setLayout, nullptr);

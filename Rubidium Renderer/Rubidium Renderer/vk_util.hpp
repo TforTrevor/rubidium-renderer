@@ -118,5 +118,24 @@ namespace rub
 
 			return write;
 		}
+
+		static void transitionImageColorToShader(VkCommandBuffer commandBuffer, VkImage image, int layerCount)
+		{
+			VkImageMemoryBarrier imageBarrier{};
+			imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageBarrier.image = image;
+			imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageBarrier.subresourceRange.baseMipLevel = 0;
+			imageBarrier.subresourceRange.levelCount = 1;
+			imageBarrier.subresourceRange.layerCount = layerCount;
+			imageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+		}
 	};
 }

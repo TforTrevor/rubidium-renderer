@@ -19,6 +19,7 @@ namespace rub
 		void setup(std::vector<VkDescriptorSetLayout>& setLayouts, VkRenderPass renderPass);
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipelineLayout getLayout() { return pipelineLayout; };
+		void setDepthCompareOp(VkCompareOp compareOp) { depthCompareOp = compareOp; }
 		
 	private:
 		void createBuffers();
@@ -40,5 +41,7 @@ namespace rub
 		std::unique_ptr<Pipeline> pipeline;
 		VkPipelineLayout pipelineLayout;
 		int descriptorSetCount = 0;
+
+		VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS;
 	};
 }

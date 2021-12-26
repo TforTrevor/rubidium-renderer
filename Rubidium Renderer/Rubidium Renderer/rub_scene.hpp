@@ -18,7 +18,7 @@ namespace rub
 		{
 			glm::mat4 view;
 			glm::mat4 projection;
-			glm::vec4 position;
+			glm::vec3 position;
 		};
 
 		struct GPUSceneData
@@ -26,7 +26,7 @@ namespace rub
 			glm::vec4 ambientColor;
 		};
 
-		void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
+		void draw(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
 		void updateBuffer(GPUCameraData data);
 		void updateBuffer(GPUSceneData data);
 
@@ -44,6 +44,7 @@ namespace rub
 		AllocatedBuffer sceneBuffer;
 		std::vector<VkDescriptorSet> sceneDescriptorSets;
 
+		void bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 		void createDescriptorSetLayout();
 		void createFramebuffers();
 

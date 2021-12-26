@@ -5,7 +5,7 @@
 namespace rub
 {
 	Scene::Scene(Device& device, std::unique_ptr<SwapChain>& swapChain, std::shared_ptr<Camera> camera, const std::string& environmentPath, std::vector<RenderObject>& renderObjects)
-		: device{ device }, renderObjects{ renderObjects }, FRAMEBUFFER_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }
+		: device{ device }, renderObjects{ renderObjects }, FRAMEBUFFER_COUNT{ swapChain->MAX_FRAMES_IN_FLIGHT }, camera{ camera }
 	{
 		globalCubemap = std::make_unique<Cubemap>(device);
 		skybox = std::make_unique<Skybox>(device, "textures/spruit_sunrise_2k.exr");
@@ -92,6 +92,25 @@ namespace rub
 			currentBuffer = commandBuffer;
 			frameBufferIndex = (frameBufferIndex + 1) % FRAMEBUFFER_COUNT;
 		}
+	}
+
+	void Scene::draw(VkCommandBuffer commandBuffer, VkRenderPass renderPass)
+	{
+		GPUCameraData cameraData = {
+			camera->getProjectionMatrix(),
+			camera->getViewMatrix(),
+			camera->getPosition()
+		};
+		updateBuffer(cameraData);
+
+		std::shared_ptr<Material> skyboxMaterial = skybox->getMaterial();
+		if (!skyboxMaterial->isReady())
+		{
+			std::vector<VkDescriptorSetLayout> setLayouts = { sceneSetLayout };
+			skyboxMaterial->setup(setLayouts, renderPass);
+		}
+		bind(commandBuffer, skyboxMaterial->getLayout());
+		skybox->draw(commandBuffer);
 	}
 
 	Scene::~Scene()

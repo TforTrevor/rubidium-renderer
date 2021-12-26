@@ -19,6 +19,7 @@ namespace rub
 		void resetWindowResizedFlag() { framebufferResized = false; };
 		void changeTitleSuffix(std::string suffix);
 		GLFWwindow* getWindow() { return window; };
+		bool getCursorToggle();
 
 	private:
 		int width;
@@ -29,5 +30,6 @@ namespace rub
 
 		void initWindow();
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+		static void keyCallback(GLFWwindow* window, int key, int scanCode, int action, int mods);
 	};
 }

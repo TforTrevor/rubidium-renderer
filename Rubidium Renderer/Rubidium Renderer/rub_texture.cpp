@@ -25,6 +25,11 @@ namespace rub
 		}		
 	}
 
+	Texture::Texture(Device& device, VkImageView imageView) : device{ device }, imageView { imageView }
+	{
+		ownsImage = false;
+	}
+
 	bool Texture::createHDRImage(const std::string& file)
 	{
 		float* pixels; // width * height * RGBA
@@ -170,7 +175,10 @@ namespace rub
 
 	Texture::~Texture()
 	{
-		vmaDestroyImage(device.getAllocator(), allocatedImage.image, allocatedImage.allocation);
-		vkDestroyImageView(device.getDevice(), imageView, nullptr);
+		if (ownsImage)
+		{
+			vmaDestroyImage(device.getAllocator(), allocatedImage.image, allocatedImage.allocation);
+			vkDestroyImageView(device.getDevice(), imageView, nullptr);
+		}		
 	}
 }

@@ -148,10 +148,16 @@
     <CustomBuild Include="shaders\shader.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\skybox.vert">
+    <CustomBuild Include="shaders\equi_to_cube.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\equi_to_cube.frag">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\skybox.frag">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\skybox.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
   </ItemGroup>

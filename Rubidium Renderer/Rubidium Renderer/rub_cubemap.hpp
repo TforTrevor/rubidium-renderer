@@ -17,13 +17,15 @@ namespace rub
 		~Cubemap();
 
 		void capture(std::vector<RenderObject>& renderObjects);
+		VkImageView getCaptureImageView() { return captureImageView; }
+		AllocatedImage getCaptureImage() { return captureImage; }
 
 	private:
 		Device& device;
 		const VkExtent2D captureExtent = { 512, 512 };
 
-		std::vector<AllocatedImage> captureImages;
-		std::vector<VkImageView> captureImageViews;
+		AllocatedImage captureImage;
+		VkImageView captureImageView;
 		VkRenderPass renderPass;
 		VkFramebuffer captureFramebuffer;
 
@@ -31,10 +33,14 @@ namespace rub
 		AllocatedBuffer cameraBuffer;
 		VkDescriptorSet descriptorSet;
 
+		std::vector<AllocatedImage> destroyImages;
+		std::vector<VkImageView> destroyImageViews;
+
 		void createImages();
 		void createRenderPass();
 		void createFramebuffer();
 		void createDescriptorSetLayout();
 		void createDescriptorSet();
+		void convertImage(VkCommandBuffer commandBuffer);
 	};
 }

@@ -101,8 +101,8 @@ namespace rub
 
 	void Renderer::updateCamera()
 	{
-		glm::mat4 view = camera->getMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(70.f), swapChain->getExtentAspectRatio(), 0.1f, 1000.0f);
+		glm::mat4 view = camera->getViewMatrix();
+		glm::mat4 projection = camera->getProjectionMatrix();
 		projection[1][1] *= -1;
 
 		GlobalDescriptor::GPUCameraData cameraData{};

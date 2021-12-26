@@ -85,6 +85,7 @@ namespace rub
 		pipelineConfig.renderPass = renderPass;
 		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
 		pipelineConfig.pipelineLayout = pipelineLayout;
+		pipelineConfig.depthStencilInfo.depthCompareOp = depthCompareOp;
 		pipeline = std::make_unique<Pipeline>(device, vertPath, fragPath, pipelineConfig);
 	}
 

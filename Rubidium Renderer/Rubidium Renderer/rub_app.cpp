@@ -16,7 +16,7 @@ namespace rub
 
 	void RubApp::run()
 	{
-		std::shared_ptr<Camera> camera = std::make_shared<Camera>(window);
+		std::shared_ptr<Camera> camera = std::make_shared<Camera>(window, 70);
 		renderer.setCamera(camera);
 		camera->setPosition(glm::vec3(0, 0, -3.0f));
 
@@ -45,6 +45,7 @@ namespace rub
 				
 				auto cpuTime1 = high_resolution_clock::now();
 				renderer.beginRenderPass(commandBuffer);
+				scene->draw(commandBuffer, renderPass);
 				//renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor(), renderPass);
 				renderer.endRenderPass(commandBuffer);
 				auto cpuTime2 = high_resolution_clock::now();
