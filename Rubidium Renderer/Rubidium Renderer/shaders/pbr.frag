@@ -1,12 +1,9 @@
 #version 460
-#extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 inColor;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec3 inWorldPos;
-layout(location = 3) in vec4 materialAlbedo;
-layout(location = 4) in vec4 materialMaskMap;
-layout(location = 5) in vec2 texCoord;
+layout(location = 3) in vec2 texCoord;
 
 layout(location = 0) out vec4 outColor;
 
@@ -20,12 +17,10 @@ layout(set = 0, binding = 1) uniform SceneData {
 	vec4 ambientColor;
 	vec4 sunDirection;
 	vec4 sunColor;
-} sceneData;
-
-layout(set = 0, binding = 2) uniform LightData {
-	vec4 lightPositions[4];
+    vec4 lightPositions[4];
 	vec4 lightColors[4];
-} lightData;
+    uint lightCount;
+} sceneData;
 
 layout(set = 2, binding = 0) uniform sampler2D albedoMap;
 layout(set = 2, binding = 1) uniform sampler2D normalMap;
@@ -118,14 +113,14 @@ void main()
     // reflectance equation
     vec3 Lo = vec3(0.0);
     // calculate per-light radiance
-	for (int i = 0; i < lightData.lightPositions.length(); i++) 
+	for (int i = 0; i < sceneData.lightCount; i++) 
 	{
 		// calculate per-light radiance
-        vec3 L = normalize(lightData.lightPositions[i].xyz - inWorldPos);
+        vec3 L = normalize(sceneData.lightPositions[i].xyz - inWorldPos);
         vec3 H = normalize(V + L);
-        float distance = length(lightData.lightPositions[i].xyz - inWorldPos);
+        float distance = length(sceneData.lightPositions[i].xyz - inWorldPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = lightData.lightColors[i].rgb * lightData.lightColors[i].a * attenuation;
+        vec3 radiance = sceneData.lightColors[i].rgb * sceneData.lightColors[i].a * attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   
@@ -159,7 +154,7 @@ void main()
 	
 	//Reinhard tonemap
     //color = color / (color + vec3(1.0));
-	color = aces(color);
+	//color = aces(color);
    
     outColor = vec4(color, 1.0);
 } 

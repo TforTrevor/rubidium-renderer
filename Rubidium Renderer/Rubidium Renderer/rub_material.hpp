@@ -20,6 +20,7 @@ namespace rub
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipelineLayout getLayout() { return pipelineLayout; };
 		void setDepthCompareOp(VkCompareOp compareOp) { depthCompareOp = compareOp; }
+		void setCullMode(VkCullModeFlags mode) { cullMode = mode; }
 		
 	private:
 		void createBuffers();
@@ -43,5 +44,6 @@ namespace rub
 		int descriptorSetCount = 0;
 
 		VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS;
+		VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 	};
 }

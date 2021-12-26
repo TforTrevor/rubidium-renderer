@@ -25,12 +25,12 @@ namespace rub
 	{
 		std::vector<VkDescriptorSetLayoutBinding> textureBindings;
 		textureBindings.resize(textures.size());
-		for (int i = 0; i < textures.size(); i++)
+		for (int i = 0; i < textureBindings.size(); i++)
 		{
 			textureBindings[i] = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, i);
 		}
 
-		VkDescriptorSetLayoutCreateInfo textureLayoutInfo = {};
+		VkDescriptorSetLayoutCreateInfo textureLayoutInfo{};
 		textureLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		textureLayoutInfo.pNext = nullptr;
 		textureLayoutInfo.bindingCount = textureBindings.size();
@@ -53,15 +53,16 @@ namespace rub
 		for (int i = 0; i < textures.size(); i++)
 		{
 			vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &textureSamplers[i]);
-			VkDescriptorImageInfo info{};
-			info.sampler = textureSamplers[i];
-			info.imageView = textures[i]->getImageView();
-			info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-			descriptors[i] = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, &info, i);
+			VkDescriptorImageInfo* info = new VkDescriptorImageInfo{};
+			info->sampler = textureSamplers[i];
+			info->imageView = textures[i]->getImageView();
+			info->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			descriptors[i] = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textureDescriptor, info, i);
 		}
 
-		vkUpdateDescriptorSets(device.getDevice(), textures.size(), descriptors.data(), 0, nullptr);
+		vkUpdateDescriptorSets(device.getDevice(), descriptors.size(), descriptors.data(), 0, nullptr);
 	}
 
 	void Material::createPipelineLayout(std::vector<VkDescriptorSetLayout>& setLayouts)
@@ -86,6 +87,7 @@ namespace rub
 		//pipelineConfig.descriptorSetLayout = descriptorSetLayout;
 		pipelineConfig.pipelineLayout = pipelineLayout;
 		pipelineConfig.depthStencilInfo.depthCompareOp = depthCompareOp;
+		pipelineConfig.rasterizationInfo.cullMode = cullMode;
 		pipeline = std::make_unique<Pipeline>(device, vertPath, fragPath, pipelineConfig);
 	}
 

@@ -61,13 +61,13 @@ namespace rub
 
 	void Camera::updateRotation(Window& window)
 	{
+		double cursorX, cursorY;
+		glfwGetCursorPos(window.getWindow(), &cursorX, &cursorY);
+		cursorX /= window.getExtent().width;
+		cursorY /= window.getExtent().height;
+
 		if (!window.getCursorToggle())
 		{
-			double cursorX, cursorY;
-			glfwGetCursorPos(window.getWindow(), &cursorX, &cursorY);
-			cursorX /= window.getExtent().width;
-			cursorY /= window.getExtent().height;
-
 			double cursorDeltaX = 0;
 			double cursorDeltaY = 0;
 			if (previousCursorX != std::numeric_limits<double>::min() && previousCursorY != std::numeric_limits<double>::min())
@@ -80,7 +80,7 @@ namespace rub
 
 			float sensitivity = 200.0f;
 
-			pitch += cursorDeltaY * sensitivity;
+			pitch -= cursorDeltaY * sensitivity;
 			yaw += cursorDeltaX * sensitivity;
 			if (pitch > 89.0f)
 				pitch = 89.0f;
@@ -88,7 +88,12 @@ namespace rub
 				pitch = -89.0f;
 
 			updateVectors();
-		}		
+		}
+		else
+		{
+			previousCursorX = cursorX;
+			previousCursorY = cursorY;
+		}
 	}
 
 	void Camera::updateVectors()
@@ -104,7 +109,9 @@ namespace rub
 
 	glm::mat4 Camera::getProjectionMatrix()
 	{
-		return projectionMatrix;
+		glm::mat4 projection = projectionMatrix;
+		//projection[1][1] *= -1;
+		return projection;
 	}
 
 	glm::mat4 Camera::getViewMatrix()

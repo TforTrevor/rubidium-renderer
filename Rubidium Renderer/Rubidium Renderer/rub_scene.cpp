@@ -18,16 +18,28 @@ namespace rub
 	{
 		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 		VkDescriptorSetLayoutBinding sceneBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
-		std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBinding, sceneBinding };
+		std::vector<VkDescriptorSetLayoutBinding> sceneBindings = { cameraBinding, sceneBinding };
 
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.pNext = nullptr;
-		layoutInfo.bindingCount = bindings.size();
-		layoutInfo.flags = 0;
-		layoutInfo.pBindings = bindings.data();
+		VkDescriptorSetLayoutCreateInfo sceneLayoutInfo{};
+		sceneLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		sceneLayoutInfo.pNext = nullptr;
+		sceneLayoutInfo.flags = 0;
+		sceneLayoutInfo.bindingCount = sceneBindings.size();
+		sceneLayoutInfo.pBindings = sceneBindings.data();
 
-		vkCreateDescriptorSetLayout(device.getDevice(), &layoutInfo, nullptr, &sceneSetLayout);
+		vkCreateDescriptorSetLayout(device.getDevice(), &sceneLayoutInfo, nullptr, &sceneSetLayout);
+
+		VkDescriptorSetLayoutBinding objectBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0);
+		std::vector<VkDescriptorSetLayoutBinding> objectBindings = { objectBinding };
+
+		VkDescriptorSetLayoutCreateInfo objectLayoutInfo{};
+		objectLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		objectLayoutInfo.pNext = nullptr;
+		objectLayoutInfo.flags = 0;
+		objectLayoutInfo.bindingCount = objectBindings.size();
+		objectLayoutInfo.pBindings = objectBindings.data();
+
+		vkCreateDescriptorSetLayout(device.getDevice(), &objectLayoutInfo, nullptr, &objectSetLayout);
 	}
 
 	void Scene::createFramebuffers()
@@ -57,6 +69,22 @@ namespace rub
 
 			vkUpdateDescriptorSets(device.getDevice(), setWrites.size(), setWrites.data(), 0, nullptr);
 		}
+
+		objectDescriptorSets.resize(FRAMEBUFFER_COUNT);
+		objectBuffers.resize(FRAMEBUFFER_COUNT);
+		for (int i = 0; i < FRAMEBUFFER_COUNT; i++)
+		{
+			size_t bufferSize = sizeof(GPUObjectData) * MAX_OBJECTS;
+			device.createBuffer(bufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, objectBuffers[i]);
+			device.getDescriptor(objectSetLayout, objectDescriptorSets[i]);
+
+			VkDescriptorBufferInfo bufferInfo{};
+			bufferInfo.buffer = objectBuffers[i].buffer;
+			bufferInfo.range = bufferSize;
+
+			VkWriteDescriptorSet setWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, objectDescriptorSets[i], &bufferInfo, 0);
+			vkUpdateDescriptorSets(device.getDevice(), 1, &setWrite, 0, nullptr);
+		}
 	}
 
 	void Scene::updateBuffer(GPUCameraData data)
@@ -77,7 +105,23 @@ namespace rub
 		vmaUnmapMemory(device.getAllocator(), sceneBuffer.allocation);
 	}
 
-	void Scene::bind(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+	void Scene::updateObjectBuffer()
+	{
+		void* objectData;
+		vmaMapMemory(device.getAllocator(), objectBuffers[frameBufferIndex].allocation, &objectData);
+		GPUObjectData* objectSSBO = (GPUObjectData*)objectData;
+
+		for (int i = 0; i < renderObjects.size(); i++)
+		{
+			auto& object = renderObjects[i];
+			objectSSBO[i].modelMatrix = object.transform.getMatrix();
+			objectSSBO[i].MVP = camera->getProjectionMatrix() * camera->getViewMatrix() * object.transform.getMatrix();
+		}
+
+		vmaUnmapMemory(device.getAllocator(), objectBuffers[frameBufferIndex].allocation);
+	}
+
+	void Scene::bindScene(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
 	{
 		uint32_t cameraOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUCameraData)) * frameBufferIndex;
 		uint32_t sceneOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUSceneData)) * frameBufferIndex;
@@ -85,6 +129,72 @@ namespace rub
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, 
 			&sceneDescriptorSets[frameBufferIndex], sceneDescriptorSets.size(), offsets.data());
+	}
+
+	void Scene::bindObjects(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout)
+	{
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, 1,
+			&objectDescriptorSets[frameBufferIndex], 0, nullptr);
+	}
+
+	void Scene::draw(VkCommandBuffer commandBuffer, VkRenderPass renderPass)
+	{
+		for (RenderObject& object : renderObjects)
+		{
+			object.transform.rotate(glm::vec3(0, 0.4f, 0));
+		}
+
+		//Update buffers
+		GPUCameraData cameraData{};
+		cameraData.projection = camera->getProjectionMatrix();
+		cameraData.view = camera->getViewMatrix();
+		cameraData.position = glm::vec4(camera->getPosition(), 1.0f);
+		updateBuffer(cameraData);
+
+		GPUSceneData sceneData{};
+		sceneData.ambientColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+		sceneData.sunDirection = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+		sceneData.sunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		sceneData.lightPositions[0] = glm::vec4(-1.5f, 0.0f, -3.0f, 0.0f);
+		sceneData.lightPositions[1] = glm::vec4(1.5f, 0.0f, -3.0f, 0.0f);
+		sceneData.lightPositions[2] = glm::vec4(0.0f, 2.0f, 2.0f, 0.0f);
+		sceneData.lightColors[0] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
+		sceneData.lightColors[1] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
+		sceneData.lightColors[2] = glm::vec4(0.5f, 0.5f, 1.0f, 25.0f);
+		sceneData.lightCount = 3;
+		updateBuffer(sceneData);
+
+		updateObjectBuffer();
+
+		//Draw render objects
+		for (int i = 0; i < renderObjects.size(); i++)
+		{
+			RenderObject& object = renderObjects[i];
+
+			std::shared_ptr<Material> material = object.material;
+			std::shared_ptr<Model> model = object.model;
+
+			if (!material->isReady())
+			{
+				std::vector<VkDescriptorSetLayout> setLayouts = { sceneSetLayout, objectSetLayout };
+				material->setup(setLayouts, renderPass);
+			}
+			bindScene(commandBuffer, material->getLayout());
+			bindObjects(commandBuffer, material->getLayout());
+			material->bind(commandBuffer);
+			model->bind(commandBuffer);
+			model->draw(commandBuffer, i);
+		}
+
+		//Draw skybox last
+		std::shared_ptr<Material> skyboxMaterial = skybox->getMaterial();
+		if (!skyboxMaterial->isReady())
+		{
+			std::vector<VkDescriptorSetLayout> setLayouts = { sceneSetLayout };
+			skyboxMaterial->setup(setLayouts, renderPass);
+		}
+		bindScene(commandBuffer, skyboxMaterial->getLayout());
+		skybox->draw(commandBuffer);
 
 		//Increment frame count when new command buffer is passed in (meaning new frame has started)
 		if (currentBuffer != commandBuffer)
@@ -94,29 +204,16 @@ namespace rub
 		}
 	}
 
-	void Scene::draw(VkCommandBuffer commandBuffer, VkRenderPass renderPass)
-	{
-		GPUCameraData cameraData = {
-			camera->getProjectionMatrix(),
-			camera->getViewMatrix(),
-			camera->getPosition()
-		};
-		updateBuffer(cameraData);
-
-		std::shared_ptr<Material> skyboxMaterial = skybox->getMaterial();
-		if (!skyboxMaterial->isReady())
-		{
-			std::vector<VkDescriptorSetLayout> setLayouts = { sceneSetLayout };
-			skyboxMaterial->setup(setLayouts, renderPass);
-		}
-		bind(commandBuffer, skyboxMaterial->getLayout());
-		skybox->draw(commandBuffer);
-	}
-
 	Scene::~Scene()
 	{
 		vkDestroyDescriptorSetLayout(device.getDevice(), sceneSetLayout, nullptr);
 		vmaDestroyBuffer(device.getAllocator(), cameraBuffer.buffer, cameraBuffer.allocation);
 		vmaDestroyBuffer(device.getAllocator(), sceneBuffer.buffer, sceneBuffer.allocation);
+
+		vkDestroyDescriptorSetLayout(device.getDevice(), objectSetLayout, nullptr);
+		for (AllocatedBuffer& buffer : objectBuffers)
+		{
+			vmaDestroyBuffer(device.getAllocator(), buffer.buffer, buffer.allocation);
+		}
 	}
 }

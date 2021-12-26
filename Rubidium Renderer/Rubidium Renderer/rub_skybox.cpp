@@ -13,6 +13,7 @@ namespace rub
 		std::shared_ptr<Material> skyboxMaterial = std::make_shared<Material>(device, "shaders/skybox.vert.spv", "shaders/skybox.frag.spv");
 		skyboxMaterial->addTexture(skyboxTexture);
 		skyboxMaterial->setDepthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
+		skyboxMaterial->setCullMode(VK_CULL_MODE_FRONT_BIT);
 
 		skyboxObject.model = skyboxModel;
 		skyboxObject.transform = { glm::vec3(0), glm::vec3(0) };

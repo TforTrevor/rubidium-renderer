@@ -106,10 +106,9 @@ namespace rub
 		
 		static VkWriteDescriptorSet writeDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imageInfo, uint32_t binding)
 		{
-			VkWriteDescriptorSet write = {};
+			VkWriteDescriptorSet write{};
 			write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			write.pNext = nullptr;
-
 			write.dstBinding = binding;
 			write.dstSet = dstSet;
 			write.descriptorCount = 1;

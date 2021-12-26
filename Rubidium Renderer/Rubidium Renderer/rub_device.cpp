@@ -75,7 +75,7 @@ namespace rub
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		appInfo.apiVersion = VK_API_VERSION_1_2;
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -169,13 +169,14 @@ namespace rub
 
 		VkPhysicalDeviceFeatures deviceFeatures{};
 
-		VkPhysicalDeviceMultiviewFeaturesKHR multiViewFeatures{};
-		multiViewFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES_KHR;
-		multiViewFeatures.multiview = true;
+		VkPhysicalDeviceVulkan11Features vulkan11Features{};
+		vulkan11Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+		vulkan11Features.shaderDrawParameters = true;
+		vulkan11Features.multiview = true;
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		createInfo.pNext = &multiViewFeatures;
+		createInfo.pNext = &vulkan11Features;
 
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -551,7 +552,7 @@ namespace rub
 		VkDescriptorPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.flags = 0;
-		poolInfo.maxSets = 10;
+		poolInfo.maxSets = 100;
 		poolInfo.poolSizeCount = (uint32_t)sizes.size();
 		poolInfo.pPoolSizes = sizes.data();
 

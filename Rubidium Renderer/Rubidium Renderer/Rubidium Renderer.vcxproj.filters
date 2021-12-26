@@ -142,10 +142,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\shader.frag">
+    <CustomBuild Include="shaders\pbr.frag">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\shader.vert">
+    <CustomBuild Include="shaders\pbr.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\equi_to_cube.vert">
