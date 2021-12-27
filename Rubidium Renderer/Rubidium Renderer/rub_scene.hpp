@@ -49,6 +49,7 @@ namespace rub
 		std::vector<RenderObject> renderObjects;
 
 		std::unique_ptr<Skybox> skybox;
+		VkSampler irradianceSampler;
 
 		VkDescriptorSetLayout sceneSetLayout;
 		AllocatedBuffer cameraBuffer;

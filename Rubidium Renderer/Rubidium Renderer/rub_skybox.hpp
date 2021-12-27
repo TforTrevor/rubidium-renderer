@@ -13,6 +13,7 @@ namespace rub
 
 		void draw(VkCommandBuffer commandBuffer);
 		std::shared_ptr<Material> getMaterial() { return skyboxObject.material; }
+		VkImageView getIrradiance() { return cubemap->getIrradianceImageView(); }
 
 	private:
 		Device& device;

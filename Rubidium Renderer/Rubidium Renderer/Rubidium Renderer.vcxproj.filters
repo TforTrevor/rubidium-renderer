@@ -148,7 +148,7 @@
     <CustomBuild Include="shaders\pbr.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\equi_to_cube.vert">
+    <CustomBuild Include="shaders\cubemap.vert">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\equi_to_cube.frag">
@@ -158,6 +158,9 @@
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\skybox.vert">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\irradiance_convolution.frag">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
   </ItemGroup>

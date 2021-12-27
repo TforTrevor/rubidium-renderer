@@ -44,7 +44,6 @@ namespace rub
 
 	void Material::createBuffers()
 	{
-		VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		device.getDescriptor(textureSetLayout, textureDescriptor);
 
 		std::vector<VkWriteDescriptorSet> descriptors;
@@ -52,6 +51,7 @@ namespace rub
 		textureSamplers.resize(textures.size());
 		for (int i = 0; i < textures.size(); i++)
 		{
+			VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, textures[i]->getMipLevels());
 			vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &textureSamplers[i]);
 
 			VkDescriptorImageInfo* info = new VkDescriptorImageInfo{};

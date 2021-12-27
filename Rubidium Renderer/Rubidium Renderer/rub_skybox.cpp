@@ -9,7 +9,7 @@ namespace rub
 
 		equiToCube(environmentPath);
 		
-		std::shared_ptr<Texture> skyboxTexture = std::make_shared<Texture>(device, cubemap->getCaptureImageView());
+		std::shared_ptr<Texture> skyboxTexture = std::make_shared<Texture>(device, cubemap->getCaptureImageView(), cubemap->getCaptureMipLevels());
 		std::shared_ptr<Material> skyboxMaterial = std::make_shared<Material>(device, "shaders/skybox.vert.spv", "shaders/skybox.frag.spv");
 		skyboxMaterial->addTexture(skyboxTexture);
 		skyboxMaterial->setDepthCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -23,7 +23,7 @@ namespace rub
 	void Skybox::equiToCube(const std::string& environmentPath)
 	{
 		std::shared_ptr<Texture> equiTexture = std::make_shared<Texture>(device, environmentPath, Texture::Format::HDR);
-		std::shared_ptr<Material> equiMaterial = std::make_shared<Material>(device, "shaders/equi_to_cube.vert.spv", "shaders/equi_to_cube.frag.spv");
+		std::shared_ptr<Material> equiMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/equi_to_cube.frag.spv");
 		equiMaterial->addTexture(equiTexture);
 
 		RenderObject equiObject{};
@@ -34,6 +34,7 @@ namespace rub
 		std::vector<RenderObject> renderObjects = { equiObject };
 
 		cubemap->capture(renderObjects);
+		cubemap->captureIrradiance();
 	}
 
 	void Skybox::draw(VkCommandBuffer commandBuffer)

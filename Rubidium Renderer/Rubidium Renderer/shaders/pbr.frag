@@ -22,6 +22,8 @@ layout(set = 0, binding = 1) uniform SceneData {
     uint lightCount;
 } sceneData;
 
+layout(set = 0, binding = 2) uniform samplerCube irradianceMap;
+
 layout(set = 2, binding = 0) uniform sampler2D albedoMap;
 layout(set = 2, binding = 1) uniform sampler2D normalMap;
 layout(set = 2, binding = 2) uniform sampler2D maskMap;
@@ -63,9 +65,9 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
 {
-    return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 vec3 aces(vec3 x) 
@@ -125,7 +127,7 @@ void main()
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   
         float G   = GeometrySmith(N, V, L, roughness);      
-        vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+        vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0, roughness);
            
         vec3 numerator    = NDF * G * F; 
         float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
@@ -149,7 +151,13 @@ void main()
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
 	}    
   
-    vec3 ambient = vec3(0.03) * albedo * ao * 0;
+    vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+    vec3 ambient = (kD * diffuse) * ao;
+    //vec3 ambient = vec3(0.03) * albedo * ao * 0;
     vec3 color = ambient + Lo;
 	
 	//Reinhard tonemap

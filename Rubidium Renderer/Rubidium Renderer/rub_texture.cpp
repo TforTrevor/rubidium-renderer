@@ -25,7 +25,7 @@ namespace rub
 		}		
 	}
 
-	Texture::Texture(Device& device, VkImageView imageView) : device{ device }, imageView { imageView }
+	Texture::Texture(Device& device, VkImageView imageView, int mipLevels) : device{ device }, imageView{ imageView }, mipLevels{ mipLevels }
 	{
 		ownsImage = false;
 	}
@@ -104,7 +104,7 @@ namespace rub
 		imageExtent.width = static_cast<uint32_t>(width);
 		imageExtent.height = static_cast<uint32_t>(height);
 
-		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo((VkFormat)format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent);
+		VkImageCreateInfo createInfo = VkUtil::imageCreateInfo((VkFormat)format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, imageExtent, 1);
 
 		AllocatedImage newImage;
 
@@ -169,7 +169,7 @@ namespace rub
 
 	void Texture::createImageView(Format format)
 	{
-		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo((VkFormat)format, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT);
+		VkImageViewCreateInfo imageinfo = VkUtil::imageViewCreateInfo((VkFormat)format, allocatedImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		vkCreateImageView(device.getDevice(), &imageinfo, nullptr, &imageView);
 	}
 
