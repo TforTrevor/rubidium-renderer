@@ -19,7 +19,8 @@ namespace rub
 		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 		VkDescriptorSetLayoutBinding sceneBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 		VkDescriptorSetLayoutBinding irradianceBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
-		std::vector<VkDescriptorSetLayoutBinding> sceneBindings = { cameraBinding, sceneBinding, irradianceBinding };
+		VkDescriptorSetLayoutBinding prefilterBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
+		std::vector<VkDescriptorSetLayoutBinding> sceneBindings = { cameraBinding, sceneBinding, irradianceBinding, prefilterBinding };
 
 		VkDescriptorSetLayoutCreateInfo sceneLayoutInfo{};
 		sceneLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -51,13 +52,20 @@ namespace rub
 		size_t sceneSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUSceneData)) * FRAMEBUFFER_COUNT;
 		device.createBuffer(sceneSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, sceneBuffer);
 
-		VkSamplerCreateInfo samplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 1);
-		vkCreateSampler(device.getDevice(), &samplerInfo, nullptr, &irradianceSampler);
+		VkSamplerCreateInfo irradianceSamplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 1);
+		vkCreateSampler(device.getDevice(), &irradianceSamplerInfo, nullptr, &irradianceSampler);
+		VkSamplerCreateInfo prefilterSamplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, skybox->getPrefilterMipLevels());
+		vkCreateSampler(device.getDevice(), &prefilterSamplerInfo, nullptr, &prefilterSampler);
 
 		VkDescriptorImageInfo irradianceInfo{};
 		irradianceInfo.sampler = irradianceSampler;
 		irradianceInfo.imageView = skybox->getIrradiance();
 		irradianceInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkDescriptorImageInfo prefilterInfo{};
+		prefilterInfo.sampler = prefilterSampler;
+		prefilterInfo.imageView = skybox->getPrefilter();
+		prefilterInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		sceneDescriptorSets.resize(FRAMEBUFFER_COUNT);
 		for (int i = 0; i < FRAMEBUFFER_COUNT; i++)
@@ -75,7 +83,8 @@ namespace rub
 			VkWriteDescriptorSet cameraWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, sceneDescriptorSets[i], &cameraBufferInfo, 0);
 			VkWriteDescriptorSet sceneWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, sceneDescriptorSets[i], &sceneBufferInfo, 1);
 			VkWriteDescriptorSet irradianceWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, sceneDescriptorSets[i], &irradianceInfo, 2);
-			std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, irradianceWrite };
+			VkWriteDescriptorSet prefilterWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, sceneDescriptorSets[i], &prefilterInfo, 3);
+			std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, irradianceWrite, prefilterWrite };
 
 			vkUpdateDescriptorSets(device.getDevice(), setWrites.size(), setWrites.data(), 0, nullptr);
 		}
@@ -227,5 +236,6 @@ namespace rub
 		}
 
 		vkDestroySampler(device.getDevice(), irradianceSampler, nullptr);
+		vkDestroySampler(device.getDevice(), prefilterSampler, nullptr);
 	}
 }

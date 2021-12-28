@@ -35,6 +35,7 @@ namespace rub
 
 		cubemap->capture(renderObjects);
 		cubemap->captureIrradiance();
+		cubemap->capturePrefilter();
 	}
 
 	void Skybox::draw(VkCommandBuffer commandBuffer)

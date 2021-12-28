@@ -163,5 +163,8 @@
     <CustomBuild Include="shaders\irradiance_convolution.frag">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="shaders\prefilter.frag">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>

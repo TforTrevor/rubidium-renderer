@@ -50,6 +50,7 @@ namespace rub
 
 		std::unique_ptr<Skybox> skybox;
 		VkSampler irradianceSampler;
+		VkSampler prefilterSampler;
 
 		VkDescriptorSetLayout sceneSetLayout;
 		AllocatedBuffer cameraBuffer;

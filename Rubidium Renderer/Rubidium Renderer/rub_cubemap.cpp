@@ -6,6 +6,8 @@ namespace rub
 {
 	Cubemap::Cubemap(Device& device) : device{ device }
 	{
+		cubeModel = std::make_shared<Model>(device, "models/cube.obj");
+
 		createImages();
 		createRenderPass();
 		createFramebuffer();
@@ -15,15 +17,15 @@ namespace rub
 
 	void Cubemap::createImages()
 	{
+		VmaAllocationCreateInfo imageAllocation{};
+		imageAllocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
 		//Create capture image
 		VkImageCreateInfo captureImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
 			captureExtent, 1);
 		captureImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		captureImageInfo.arrayLayers = 6;
-
-		VmaAllocationCreateInfo captureAllocation{};
-		captureAllocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-		vmaCreateImage(device.getAllocator(), &captureImageInfo, &captureAllocation, &captureImage.image, &captureImage.allocation, nullptr);
+		vmaCreateImage(device.getAllocator(), &captureImageInfo, &imageAllocation, &captureImage.image, &captureImage.allocation, nullptr);
 
 		VkImageViewCreateInfo captureViewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, captureImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		captureViewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
@@ -35,15 +37,29 @@ namespace rub
 			irradianceExtent, 1);
 		irradianceImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		irradianceImageInfo.arrayLayers = 6;
-
-		VmaAllocationCreateInfo irradianceAllocation{};
-		irradianceAllocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-		vmaCreateImage(device.getAllocator(), &captureImageInfo, &irradianceAllocation, &irradianceImage.image, &irradianceImage.allocation, nullptr);
+		vmaCreateImage(device.getAllocator(), &captureImageInfo, &imageAllocation, &irradianceImage.image, &irradianceImage.allocation, nullptr);
 
 		VkImageViewCreateInfo irradianceViewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, irradianceImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		irradianceViewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
 		irradianceViewInfo.subresourceRange.layerCount = 6;
 		vkCreateImageView(device.getDevice(), &irradianceViewInfo, nullptr, &irradianceImageView);
+
+		//Create prefilter image
+		VkImageCreateInfo prefilterImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			captureExtent, captureMipLevels);
+		prefilterImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		prefilterImageInfo.arrayLayers = 6;
+		vmaCreateImage(device.getAllocator(), &prefilterImageInfo, &imageAllocation, &prefilterImage.image, &prefilterImage.allocation, nullptr);
+
+		prefilterImageViews.resize(captureMipLevels);
+		for (int i = 0; i < captureMipLevels; i++)
+		{
+			VkImageViewCreateInfo prefilterViewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, prefilterImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+			prefilterViewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+			prefilterViewInfo.subresourceRange.layerCount = 6;
+			prefilterViewInfo.subresourceRange.baseMipLevel = i;
+			vkCreateImageView(device.getDevice(), &prefilterViewInfo, nullptr, &prefilterImageViews[i]);
+		}		
 	}
 
 	void Cubemap::createRenderPass()
@@ -122,12 +138,30 @@ namespace rub
 		irradianceInfo.height = irradianceExtent.height;
 		irradianceInfo.layers = 1;
 		vkCreateFramebuffer(device.getDevice(), &irradianceInfo, nullptr, &irradianceFramebuffer);
+
+		prefilterFramebuffers.resize(captureMipLevels);
+		for (int i = 0; i < prefilterFramebuffers.size(); i++)
+		{
+			int mipWidth = captureExtent.width * std::pow(0.5f, i);
+			int mipHeight = captureExtent.height * std::pow(0.5f, i);
+
+			VkFramebufferCreateInfo prefilterInfo{};
+			prefilterInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			prefilterInfo.renderPass = renderPass;
+			prefilterInfo.attachmentCount = 1;
+			prefilterInfo.pAttachments = &prefilterImageViews[i];
+			prefilterInfo.width = mipWidth;
+			prefilterInfo.height = mipHeight;
+			prefilterInfo.layers = 1;
+			vkCreateFramebuffer(device.getDevice(), &prefilterInfo, nullptr, &prefilterFramebuffers[i]);
+		}
 	}
 
 	void Cubemap::createDescriptorSetLayout()
 	{
 		VkDescriptorSetLayoutBinding cameraBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-		std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBinding };
+		VkDescriptorSetLayoutBinding prefilterBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_FRAGMENT_BIT, 1);
+		std::vector<VkDescriptorSetLayoutBinding> bindings = { cameraBinding, prefilterBinding };
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -144,14 +178,22 @@ namespace rub
 		size_t cameraSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUCameraData));
 		device.createBuffer(cameraSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, cameraBuffer);
 
+		size_t prefilterSize = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUPrefilterData)) * captureMipLevels;
+		device.createBuffer(prefilterSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, prefilterBuffer);
+
 		device.getDescriptor(setLayout, descriptorSet);
 
 		VkDescriptorBufferInfo cameraBufferInfo{};
 		cameraBufferInfo.buffer = cameraBuffer.buffer;
 		cameraBufferInfo.range = sizeof(GPUCameraData);
 
+		VkDescriptorBufferInfo prefilterBufferInfo{};
+		prefilterBufferInfo.buffer = prefilterBuffer.buffer;
+		prefilterBufferInfo.range = sizeof(GPUPrefilterData);
+
 		VkWriteDescriptorSet cameraWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorSet, &cameraBufferInfo, 0);
-		std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite };
+		VkWriteDescriptorSet prefilterWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptorSet, &prefilterBufferInfo, 1);
+		std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite, prefilterWrite };
 
 		vkUpdateDescriptorSets(device.getDevice(), setWrites.size(), setWrites.data(), 0, nullptr);
 
@@ -166,21 +208,23 @@ namespace rub
 				glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
 			}
 		};
-
-		char* cameraData;
-		vmaMapMemory(device.getAllocator(), cameraBuffer.allocation, (void**)&cameraData);
+		void* cameraData;
+		vmaMapMemory(device.getAllocator(), cameraBuffer.allocation, &cameraData);
 		memcpy(cameraData, &gpuCameraData, sizeof(GPUCameraData));
 		vmaUnmapMemory(device.getAllocator(), cameraBuffer.allocation);
 	}
 
 	void Cubemap::capture(std::vector<RenderObject>& renderObjects)
 	{
-		capture(renderObjects, captureFramebuffer, captureExtent, captureImage, captureImageView, captureMipLevels);
+		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		capture(commandBuffer, renderObjects, captureFramebuffer, captureExtent, captureImage, captureImageView);
+		convertImage(commandBuffer, captureImage, captureImageView, captureExtent, captureMipLevels, true);
+		device.endSingleTimeCommands(commandBuffer);
+		cleanup();
 	}
 
 	void Cubemap::captureIrradiance()
 	{
-		std::shared_ptr<Model> cubeModel = std::make_shared<Model>(device, "models/cube.obj");
 		std::shared_ptr<Texture> captureTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
 		std::shared_ptr<Material> captureMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/irradiance_convolution.frag.spv");
 		captureMaterial->addTexture(captureTexture);
@@ -191,10 +235,57 @@ namespace rub
 		renderObject.transform = { glm::vec3(0), glm::vec3(0) };
 		std::vector<RenderObject> renderObjects = { renderObject };
 
-		capture(renderObjects, irradianceFramebuffer, irradianceExtent, irradianceImage, irradianceImageView, 1);
+		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		capture(commandBuffer, renderObjects, irradianceFramebuffer, irradianceExtent, irradianceImage, irradianceImageView);
+		convertImage(commandBuffer, irradianceImage, irradianceImageView, irradianceExtent, 1, false);
+		device.endSingleTimeCommands(commandBuffer);
+		cleanup();
 	}
 
-	void Cubemap::capture(std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, AllocatedImage& image, VkImageView& imageView, int mipLevels)
+	void Cubemap::capturePrefilter()
+	{
+		std::shared_ptr<Texture> captureTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
+		std::shared_ptr<Material> captureMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/prefilter.frag.spv");
+		captureMaterial->addTexture(captureTexture);
+
+		RenderObject renderObject{};
+		renderObject.model = cubeModel;
+		renderObject.material = captureMaterial;
+		renderObject.transform = { glm::vec3(0), glm::vec3(0) };
+		std::vector<RenderObject> renderObjects = { renderObject };
+
+		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		for (int i = 0; i < captureMipLevels; i++)
+		{
+			int mipWidth = captureExtent.width * std::pow(0.5f, i);
+			int mipHeight = captureExtent.height * std::pow(0.5f, i);
+			VkExtent2D extent = { mipWidth, mipHeight };
+
+			GPUPrefilterData gpuPrefilter;
+			gpuPrefilter.roughness = (float)i / (float)(captureMipLevels - 1);
+
+			char* prefilterData;
+			vmaMapMemory(device.getAllocator(), prefilterBuffer.allocation, (void**)&prefilterData);
+			prefilterData += VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUPrefilterData)) * i;
+			memcpy(prefilterData, &gpuPrefilter, sizeof(GPUPrefilterData));
+			vmaUnmapMemory(device.getAllocator(), prefilterBuffer.allocation);
+
+			prefilterIndex = i;
+			capture(commandBuffer, renderObjects, prefilterFramebuffers[i], extent, prefilterImage, prefilterImageViews[i]);
+		}
+		convertImage(commandBuffer, prefilterImage, prefilterImageView, captureExtent, captureMipLevels, false);
+		device.endSingleTimeCommands(commandBuffer);
+
+		for (AllocatedImage& image : destroyImages)
+		{
+			vmaDestroyImage(device.getAllocator(), image.image, image.allocation);
+		}
+		destroyImages.clear();
+		destroyImageViews.clear();
+	}
+
+	void Cubemap::capture(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, 
+		AllocatedImage& image, VkImageView& imageView)
 	{
 		VkClearValue clearValue{};
 		clearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -209,7 +300,6 @@ namespace rub
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearValue;
 
-		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport{};
@@ -224,6 +314,8 @@ namespace rub
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 		std::vector<VkDescriptorSetLayout> setLayouts = { setLayout };
+		uint32_t prefilterOffset = VkUtil::padUniformBufferSize(device.getDeviceProperties(), sizeof(GPUPrefilterData)) * prefilterIndex;
+		std::vector<uint32_t> offsets = { prefilterOffset };
 
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
@@ -233,38 +325,22 @@ namespace rub
 			{
 				renderObject.material->setup(setLayouts, renderPass);
 			}
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderObject.material->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderObject.material->getLayout(), 0, 1, &descriptorSet, offsets.size(), offsets.data());
 			renderObject.material->bind(commandBuffer);
 			renderObject.model->bind(commandBuffer);
 			renderObject.model->draw(commandBuffer, i);
 		}
 
 		vkCmdEndRenderPass(commandBuffer);
-
-		convertImage(commandBuffer, image, imageView, extent, mipLevels);
-
-		device.endSingleTimeCommands(commandBuffer);
-
-		//Destroy attachments
-		for (AllocatedImage& image : destroyImages)
-		{
-			vmaDestroyImage(device.getAllocator(), image.image, image.allocation);
-		}
-		for (VkImageView& imageView : destroyImageViews)
-		{
-			vkDestroyImageView(device.getDevice(), imageView, nullptr);
-		}
-		destroyImages.clear();
-		destroyImageViews.clear();
 	}
 
-	void Cubemap::convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels)
+	void Cubemap::convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels, bool generateMips)
 	{
 		//Transfer old image layout from color attachment to transfer source
 		VkImageSubresourceRange colorRange{};
 		colorRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		colorRange.baseMipLevel = 0;
-		colorRange.levelCount = 1;
+		colorRange.levelCount = generateMips ? 1 : mipLevels;
 		colorRange.baseArrayLayer = 0;
 		colorRange.layerCount = 6;
 
@@ -312,11 +388,20 @@ namespace rub
 		int mipHeight = extent.height;
 		for (int i = 0; i < mipLevels; i++)
 		{
+			int width = extent.width;
+			int height = extent.height;
+			int mipLevel = 0;
+			if (!generateMips)
+			{
+				width = mipWidth;
+				height = mipHeight;
+				mipLevel = i;
+			}
 			VkImageBlit blit{};
 			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { (int)extent.width, (int)extent.height, 1 };
+			blit.srcOffsets[1] = { width, height, 1 };
 			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blit.srcSubresource.mipLevel = 0;
+			blit.srcSubresource.mipLevel = mipLevel;
 			blit.srcSubresource.baseArrayLayer = 0;
 			blit.srcSubresource.layerCount = 6;
 			blit.dstOffsets[0] = { 0, 0, 0 };
@@ -330,15 +415,6 @@ namespace rub
 
 			if (mipWidth > 1) mipWidth /= 2;
 			if (mipHeight > 1) mipHeight /= 2;
-
-			/*VkImageCopy imageCopy{};
-			imageCopy.srcSubresource = subresourceLayers;
-			imageCopy.dstSubresource = subresourceLayers;
-			imageCopy.srcOffset = { 0, 0, 0 };
-			imageCopy.dstOffset = { 0, 0, 0 };
-			imageCopy.extent = { extent.width, extent.height, 1 };
-
-			vkCmdCopyImage(commandBuffer, oldImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageCopy);*/
 		}		
 
 		//Destroy old image and image view
@@ -362,6 +438,21 @@ namespace rub
 		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	}
 
+	void Cubemap::cleanup()
+	{
+		//Destroy attachments
+		for (AllocatedImage& image : destroyImages)
+		{
+			vmaDestroyImage(device.getAllocator(), image.image, image.allocation);
+		}
+		for (VkImageView& imageView : destroyImageViews)
+		{
+			vkDestroyImageView(device.getDevice(), imageView, nullptr);
+		}
+		destroyImages.clear();
+		destroyImageViews.clear();
+	}
+
 	Cubemap::~Cubemap()
 	{
 		vmaDestroyImage(device.getAllocator(), captureImage.image, captureImage.allocation);
@@ -372,8 +463,21 @@ namespace rub
 		vkDestroyImageView(device.getDevice(), irradianceImageView, nullptr);
 		vkDestroyFramebuffer(device.getDevice(), irradianceFramebuffer, nullptr);
 
+		vmaDestroyImage(device.getAllocator(), prefilterImage.image, prefilterImage.allocation);
+		vkDestroyImageView(device.getDevice(), prefilterImageView, nullptr);
+		for (VkFramebuffer& frameBuffer : prefilterFramebuffers)
+		{
+			vkDestroyFramebuffer(device.getDevice(), frameBuffer, nullptr);
+		}
+
 		vkDestroyRenderPass(device.getDevice(), renderPass, nullptr);
 		vkDestroyDescriptorSetLayout(device.getDevice(), setLayout, nullptr);
 		vmaDestroyBuffer(device.getAllocator(), cameraBuffer.buffer, cameraBuffer.allocation);
+		vmaDestroyBuffer(device.getAllocator(), prefilterBuffer.buffer, prefilterBuffer.allocation);
+
+		for (VkImageView& imageView : prefilterImageViews)
+		{
+			vkDestroyImageView(device.getDevice(), imageView, nullptr);
+		}
 	}
 }

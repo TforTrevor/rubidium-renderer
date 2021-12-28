@@ -13,16 +13,23 @@ namespace rub
 			glm::mat4 projection;
 			glm::mat4 view[6];
 		};
+		struct GPUPrefilterData
+		{
+			float roughness;
+		};
 
 		Cubemap(Device& device);
 		~Cubemap();
 
 		void capture(std::vector<RenderObject>& renderObjects);
 		void captureIrradiance();
+		void capturePrefilter();
 		VkImageView getCaptureImageView() { return captureImageView; }
 		AllocatedImage getCaptureImage() { return captureImage; }
 		VkImageView getIrradianceImageView() { return irradianceImageView; }
 		AllocatedImage getIrradianceImage() { return irradianceImage; }
+		VkImageView getPrefilterImageView() { return prefilterImageView; }
+		AllocatedImage getPrefilterImage() { return prefilterImage; }
 		int getCaptureMipLevels() { return captureMipLevels; }
 
 	private:
@@ -39,21 +46,32 @@ namespace rub
 		AllocatedImage irradianceImage;
 		VkImageView irradianceImageView;	
 		VkFramebuffer irradianceFramebuffer;
+		AllocatedImage prefilterImage;
+		VkImageView prefilterImageView;
+		std::vector<VkImageView> prefilterImageViews;
+		std::vector<VkFramebuffer> prefilterFramebuffers;
 
 		VkDescriptorSetLayout setLayout;
 		AllocatedBuffer cameraBuffer;
+		AllocatedBuffer prefilterBuffer;
 		VkDescriptorSet descriptorSet;
 
 		std::vector<AllocatedImage> destroyImages;
 		std::vector<VkImageView> destroyImageViews;
+
+		std::shared_ptr<Model> cubeModel;
+
+		int prefilterIndex;
 
 		void createImages();
 		void createRenderPass();
 		void createFramebuffer();
 		void createDescriptorSetLayout();
 		void createDescriptorSet();
+		void cleanup();
 
-		void capture(std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, AllocatedImage& image, VkImageView& imageView, int mipLevels);
-		void convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels);
+		void capture(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, 
+			AllocatedImage& image, VkImageView& imageView);
+		void convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels, bool generateMips);
 	};
 }
