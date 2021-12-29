@@ -81,17 +81,25 @@ namespace rub
 
 		std::shared_ptr<Texture> blueWallAlbedo = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Color.png", Texture::Format::SRGB);
 		std::shared_ptr<Texture> blueWallNormal = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Normal.png", Texture::Format::LINEAR);
-		std::shared_ptr<Texture> blueWallMask = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Roughness.png", Texture::Format::LINEAR);
+		std::shared_ptr<Texture> blueWallMask = std::make_shared<Texture>(device, "textures/PaintedBricks001_1K_Mask.png", Texture::Format::LINEAR);
 
 		//std::shared_ptr<Texture> brickWallAlbedo = std::make_shared<Texture>(device, "textures/Bricks071_1K_Color.png", Texture::Format::SRGB);
 		//std::shared_ptr<Texture> brickWallNormal = std::make_shared<Texture>(device, "textures/Bricks071_1K_Normal.png", Texture::Format::LINEAR);
 		//std::shared_ptr<Texture> brickWallMask = std::make_shared<Texture>(device, "textures/Bricks071_1K_Roughness.png", Texture::Format::LINEAR);
+
+		std::shared_ptr<Texture> metalAlbedo = std::make_shared<Texture>(device, "textures/Metal011_1K_Color.png", Texture::Format::SRGB);
+		std::shared_ptr<Texture> metalNormal = std::make_shared<Texture>(device, "textures/Metal011_1K_NormalGL.png", Texture::Format::LINEAR);
+		std::shared_ptr<Texture> metalMask = std::make_shared<Texture>(device, "textures/Metal011_1K_Mask.png", Texture::Format::LINEAR);
 
 		std::shared_ptr<Material> blueWallMaterial = std::make_shared<Material>(device, "shaders/pbr.vert.spv", "shaders/pbr.frag.spv");
 		blueWallMaterial->addTexture(blueWallAlbedo);
 		blueWallMaterial->addTexture(blueWallNormal);
 		blueWallMaterial->addTexture(blueWallMask);
 		//std::shared_ptr<Material> brickWallMaterial = std::make_shared<Material>(device, brickWallAlbedo, brickWallNormal, brickWallMask);
+		std::shared_ptr<Material> metalMaterial = std::make_shared<Material>(device, "shaders/pbr.vert.spv", "shaders/pbr.frag.spv");
+		metalMaterial->addTexture(metalAlbedo);
+		metalMaterial->addTexture(metalNormal);
+		metalMaterial->addTexture(metalMask);
 
 		RenderObject object{};
 		object.model = sphere;
@@ -101,7 +109,7 @@ namespace rub
 		RenderObject object2{};
 		object2.model = sphere;
 		object2.transform = Transform{ glm::vec3(1.5f, 0, 0), glm::vec3(0, 180.0f, 0) };
-		object2.material = blueWallMaterial;
+		object2.material = metalMaterial;
 
 		////RenderObject object3{};
 		////object3.model = cube;

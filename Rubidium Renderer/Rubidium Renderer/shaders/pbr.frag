@@ -107,7 +107,7 @@ void main()
     vec3 R = reflect(-V, N); 
 
 	vec3 albedo = texture(albedoMap, texCoord).rgb;
-	float metallic = 0;
+	float metallic = texture(maskMap, texCoord).g;
 	float roughness = texture(maskMap, texCoord).r;
 	float ao = 1.0;
 
