@@ -72,6 +72,9 @@
     <ClCompile Include="rub_skybox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rub_compute_shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rub_swap_chain.hpp">
@@ -140,6 +143,9 @@
     <ClInclude Include="rub_skybox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="rub_compute_shader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\pbr.frag">
@@ -164,6 +170,9 @@
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="shaders\prefilter.frag">
+      <Filter>Source Files\shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\brdf.comp">
       <Filter>Source Files\shaders</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -20,9 +20,12 @@ layout(set = 0, binding = 1) uniform SceneData {
     vec4 lightPositions[4];
 	vec4 lightColors[4];
     uint lightCount;
+    uint prefilterMips;
 } sceneData;
 
 layout(set = 0, binding = 2) uniform samplerCube irradianceMap;
+layout(set = 0, binding = 3) uniform samplerCube prefilterMap;
+layout(set = 0, binding = 4) uniform sampler2D brdfMap;
 
 layout(set = 2, binding = 0) uniform sampler2D albedoMap;
 layout(set = 2, binding = 1) uniform sampler2D normalMap;
@@ -101,6 +104,7 @@ void main()
 {		
     vec3 N = getNormalFromMap();
     vec3 V = normalize(cameraData.position.xyz - inWorldPos);
+    vec3 R = reflect(-V, N); 
 
 	vec3 albedo = texture(albedoMap, texCoord).rgb;
 	float metallic = 0;
@@ -149,14 +153,22 @@ void main()
 
         // add to outgoing radiance Lo
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
-	}    
+	}
+
+    vec3 F = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);
   
-    vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);
+    vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;	
+
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * albedo;
-    vec3 ambient = (kD * diffuse) * ao;
+
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * sceneData.prefilterMips).rgb;    
+    vec2 brdf  = texture(brdfMap, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    vec3 ambient = (kD * diffuse + specular) * ao;
     //vec3 ambient = vec3(0.03) * albedo * ao * 0;
     vec3 color = ambient + Lo;
 	

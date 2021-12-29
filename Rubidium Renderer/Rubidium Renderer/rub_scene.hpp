@@ -5,6 +5,7 @@
 #include "rub_camera.hpp"
 #include "rub_swap_chain.hpp"
 #include "rub_skybox.hpp"
+#include "rub_compute_shader.hpp"
 
 namespace rub
 {
@@ -26,6 +27,7 @@ namespace rub
 			glm::vec4 lightPositions[4]; //4th component for alignment
 			glm::vec4 lightColors[4];
 			uint32_t lightCount;
+			uint32_t prefilterMips;
 		};
 
 		struct GPUObjectData
@@ -61,10 +63,16 @@ namespace rub
 		std::vector<AllocatedBuffer> objectBuffers;
 		std::vector<VkDescriptorSet> objectDescriptorSets;
 
+		std::unique_ptr<ComputeShader> brdfShader;
+		AllocatedImage brdfImage;
+		VkImageView brdfImageView;
+		VkSampler brdfSampler;
+
 		void bindScene(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 		void bindObjects(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 		void createDescriptorSetLayout();
 		void createFramebuffers();
+		void createBRDF();
 
 		void updateObjectBuffer();
 

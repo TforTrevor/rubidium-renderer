@@ -212,6 +212,7 @@
     <ClCompile Include="miniz.c" />
     <ClCompile Include="rub_app.cpp" />
     <ClCompile Include="rub_camera.cpp" />
+    <ClCompile Include="rub_compute_shader.cpp" />
     <ClCompile Include="rub_cubemap.cpp" />
     <ClCompile Include="rub_device.cpp" />
     <ClCompile Include="rub_material.cpp" />
@@ -271,6 +272,7 @@
     <ClInclude Include="miniz.h" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_camera.hpp" />
+    <ClInclude Include="rub_compute_shader.hpp" />
     <ClInclude Include="rub_cubemap.hpp" />
     <ClInclude Include="rub_device.hpp" />
     <ClInclude Include="rub_material.hpp" />
@@ -393,6 +395,27 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\prefilter.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling shaders</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)%(Filename)%(Extension).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compiling shaders</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RootDir)%(Directory)%(Filename)%(Extension).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling shaders</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)%(Filename)%(Extension).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling shaders</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RootDir)%(Directory)%(Filename)%(Extension).spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shaders\brdf.comp">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin\glslangValidator -V -o "%(RootDir)%(Directory)%(Filename)%(Extension).spv" "%(FullPath)"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compiling shaders</Message>

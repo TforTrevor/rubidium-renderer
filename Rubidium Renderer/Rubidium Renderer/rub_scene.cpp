@@ -10,8 +10,32 @@ namespace rub
 		globalCubemap = std::make_unique<Cubemap>(device);
 		skybox = std::make_unique<Skybox>(device, "textures/spruit_sunrise_2k.exr");
 
+		createBRDF();
 		createDescriptorSetLayout();
 		createFramebuffers();
+	}
+
+	void Scene::createBRDF()
+	{
+		VkExtent2D extent = { 512, 512 };
+
+		VkImageCreateInfo imageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16_SFLOAT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, extent, 1);
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		vmaCreateImage(device.getAllocator(), &imageInfo, &allocationInfo, &brdfImage.image, &brdfImage.allocation, nullptr);
+
+		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16_SFLOAT, brdfImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &brdfImageView);		
+
+		std::vector<VkDescriptorSetLayout> empty;
+		brdfShader = std::make_unique<ComputeShader>(device, "shaders/brdf.comp.spv", brdfImageView, empty);
+		
+		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		VkUtil::transitionUndefinedToGeneral(commandBuffer, brdfImage.image, 1);
+		brdfShader->bind(commandBuffer);
+		vkCmdDispatch(commandBuffer, 32, 32, 1);
+		VkUtil::transitionGeneralToShader(commandBuffer, brdfImage.image, 1);
+		device.endSingleTimeCommands(commandBuffer);
 	}
 
 	void Scene::createDescriptorSetLayout()
@@ -20,7 +44,8 @@ namespace rub
 		VkDescriptorSetLayoutBinding sceneBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1);
 		VkDescriptorSetLayoutBinding irradianceBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2);
 		VkDescriptorSetLayoutBinding prefilterBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3);
-		std::vector<VkDescriptorSetLayoutBinding> sceneBindings = { cameraBinding, sceneBinding, irradianceBinding, prefilterBinding };
+		VkDescriptorSetLayoutBinding brdfBinding = VkUtil::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4);
+		std::vector<VkDescriptorSetLayoutBinding> sceneBindings = { cameraBinding, sceneBinding, irradianceBinding, prefilterBinding, brdfBinding };
 
 		VkDescriptorSetLayoutCreateInfo sceneLayoutInfo{};
 		sceneLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -56,6 +81,8 @@ namespace rub
 		vkCreateSampler(device.getDevice(), &irradianceSamplerInfo, nullptr, &irradianceSampler);
 		VkSamplerCreateInfo prefilterSamplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, skybox->getPrefilterMipLevels());
 		vkCreateSampler(device.getDevice(), &prefilterSamplerInfo, nullptr, &prefilterSampler);
+		VkSamplerCreateInfo brdfSamplerInfo = VkUtil::samplesCreateInfo(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 1);
+		vkCreateSampler(device.getDevice(), &brdfSamplerInfo, nullptr, &brdfSampler);
 
 		VkDescriptorImageInfo irradianceInfo{};
 		irradianceInfo.sampler = irradianceSampler;
@@ -66,6 +93,11 @@ namespace rub
 		prefilterInfo.sampler = prefilterSampler;
 		prefilterInfo.imageView = skybox->getPrefilter();
 		prefilterInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkDescriptorImageInfo brdfInfo{};
+		brdfInfo.sampler = brdfSampler;
+		brdfInfo.imageView = brdfImageView;
+		brdfInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		sceneDescriptorSets.resize(FRAMEBUFFER_COUNT);
 		for (int i = 0; i < FRAMEBUFFER_COUNT; i++)
@@ -84,7 +116,8 @@ namespace rub
 			VkWriteDescriptorSet sceneWrite = VkUtil::writeDescriptorBuffer(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, sceneDescriptorSets[i], &sceneBufferInfo, 1);
 			VkWriteDescriptorSet irradianceWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, sceneDescriptorSets[i], &irradianceInfo, 2);
 			VkWriteDescriptorSet prefilterWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, sceneDescriptorSets[i], &prefilterInfo, 3);
-			std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, irradianceWrite, prefilterWrite };
+			VkWriteDescriptorSet brdfWrite = VkUtil::writeDescriptorImage(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, sceneDescriptorSets[i], &brdfInfo, 4);
+			std::vector<VkWriteDescriptorSet> setWrites = { cameraWrite, sceneWrite, irradianceWrite, prefilterWrite, brdfWrite };
 
 			vkUpdateDescriptorSets(device.getDevice(), setWrites.size(), setWrites.data(), 0, nullptr);
 		}
@@ -180,7 +213,8 @@ namespace rub
 		sceneData.lightColors[0] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
 		sceneData.lightColors[1] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
 		sceneData.lightColors[2] = glm::vec4(0.5f, 0.5f, 1.0f, 25.0f);
-		sceneData.lightCount = 3;
+		sceneData.lightCount = 0;
+		sceneData.prefilterMips = skybox->getPrefilterMipLevels();
 		updateBuffer(sceneData);
 
 		updateObjectBuffer();
@@ -237,5 +271,9 @@ namespace rub
 
 		vkDestroySampler(device.getDevice(), irradianceSampler, nullptr);
 		vkDestroySampler(device.getDevice(), prefilterSampler, nullptr);
+
+		vmaDestroyImage(device.getAllocator(), brdfImage.image, brdfImage.allocation);
+		vkDestroyImageView(device.getDevice(), brdfImageView, nullptr);
+		vkDestroySampler(device.getDevice(), brdfSampler, nullptr);
 	}
 }
