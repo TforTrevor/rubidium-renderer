@@ -220,6 +220,7 @@ namespace rub
 	{
 		vkDestroyShaderModule(device.getDevice(), vertShaderModule, nullptr);
 		vkDestroyShaderModule(device.getDevice(), fragShaderModule, nullptr);
+		vkDestroyShaderModule(device.getDevice(), compShaderModule, nullptr);
 		vkDestroyPipeline(device.getDevice(), pipeline, nullptr);
 	}
 }

@@ -187,69 +187,147 @@ namespace rub
 			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 		}
 
-		static void generateMipMaps(Device& device, VkImage image, int width, int height, int mipLevels, int layerCount)
+		static VkImageMemoryBarrier imageMemoryBarrier(VkImage image, VkImageAspectFlags aspectMask, int mipLevels, int layerCount)
 		{
-			VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+			VkImageMemoryBarrier imageBarrier{};
+			imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			imageBarrier.image = image;
+			imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageBarrier.subresourceRange.baseArrayLayer = 0;
+			imageBarrier.subresourceRange.layerCount = layerCount;
+			imageBarrier.subresourceRange.levelCount = mipLevels;
 
-			VkImageMemoryBarrier barrier{};
-			barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			barrier.image = image;
-			barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			barrier.subresourceRange.baseArrayLayer = 0;
-			barrier.subresourceRange.layerCount = layerCount;
-			barrier.subresourceRange.levelCount = 1;
+			return imageBarrier;
+		}
 
+		static void convertColorAttachmentToShaderRead(VkCommandBuffer commandBuffer, VmaAllocator allocator, AllocatedImage input, AllocatedImage& output, 
+			VkExtent2D extent, int mipLevels, int layerCount)
+		{
+			//Create new image with shader read layout
+			AllocatedImage newImage;
+			VkImageCreateInfo newImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, mipLevels);
+			newImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+			newImageInfo.arrayLayers = layerCount;
+			VmaAllocationCreateInfo allocationInfo{};
+			allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+			vmaCreateImage(allocator, &newImageInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
+
+			//Transfer from color optimal to transfer source optimal
+			VkImageMemoryBarrier colorToTransfer = imageMemoryBarrier(input.image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			colorToTransfer.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			colorToTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			colorToTransfer.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+			colorToTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorToTransfer);
+
+			//Transfer from undefined to transfer destination optimal
+			VkImageMemoryBarrier undefinedToTransfer = imageMemoryBarrier(newImage.image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			undefinedToTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			undefinedToTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			undefinedToTransfer.srcAccessMask = VK_ACCESS_NONE_KHR;
+			undefinedToTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &undefinedToTransfer);
+
+			//Copy input image to output image
+			uint32_t mipWidth = extent.width;
+			uint32_t mipHeight = extent.height;
+			std::vector<VkImageCopy> imageCopies;
+			for (int i = 0; i < mipLevels; i++)
+			{
+				VkImageSubresourceLayers subresource{};
+				subresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				subresource.layerCount = layerCount;
+				subresource.mipLevel = i;
+
+				VkImageCopy imageCopy{};
+				imageCopy.extent = { mipWidth, mipHeight, 1 };
+				imageCopy.srcSubresource = subresource;
+				imageCopy.dstSubresource = subresource;
+
+				imageCopies.push_back(imageCopy);
+
+				mipWidth /= 2;
+				mipHeight /= 2;
+			}
+			vkCmdCopyImage(commandBuffer, input.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+				imageCopies.size(), imageCopies.data());
+
+			//Transition new iamge to shader read optimal
+			VkImageMemoryBarrier transferToShader = imageMemoryBarrier(newImage.image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			transferToShader.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			transferToShader.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			transferToShader.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			transferToShader.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &transferToShader);
+
+			output = newImage;
+		}
+
+		static void generateMipMaps(VkCommandBuffer commandBuffer, VkImage oldImage, VkImage newImage, int width, int height, int layerCount)
+		{
+			const int mipLevels = calculateMipLevels(width, height);
+
+			VkImageMemoryBarrier oldImageBarrier{};
+			oldImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			oldImageBarrier.image = oldImage;
+			oldImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			oldImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+			oldImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			oldImageBarrier.subresourceRange.baseArrayLayer = 0;
+			oldImageBarrier.subresourceRange.layerCount = layerCount;
+			oldImageBarrier.subresourceRange.levelCount = 1;
+
+			//Transition oldImage from current layout to transfer source
+			oldImageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			oldImageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+			oldImageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+			oldImageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &oldImageBarrier);
+
+			//Transition newImage from undefined layout to transfer destination
+			VkImageMemoryBarrier newImageBarrier = oldImageBarrier;
+			newImageBarrier.image = newImage;
+			newImageBarrier.subresourceRange.levelCount = mipLevels;
+			newImageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			newImageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			newImageBarrier.srcAccessMask = VK_ACCESS_NONE_KHR;
+			newImageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &newImageBarrier);
+
+			//Generate mip maps
 			int32_t mipWidth = width;
 			int32_t mipHeight = height;
-
-			for (int i = 1; i < mipLevels; i++)
+			for (int i = 0; i < mipLevels; i++)
 			{
-				barrier.subresourceRange.baseMipLevel = i - 1;
-				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-				barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-				vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
 				VkImageBlit blit{};
 				blit.srcOffsets[0] = { 0, 0, 0 };
-				blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+				blit.srcOffsets[1] = { width, height, 1 };
 				blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				blit.srcSubresource.mipLevel = i - 1;
+				blit.srcSubresource.mipLevel = 0;
 				blit.srcSubresource.baseArrayLayer = 0;
-				blit.srcSubresource.layerCount = layerCount;
+				blit.srcSubresource.layerCount = 6;
 				blit.dstOffsets[0] = { 0, 0, 0 };
-				blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+				blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
 				blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 				blit.dstSubresource.mipLevel = i;
 				blit.dstSubresource.baseArrayLayer = 0;
-				blit.dstSubresource.layerCount = layerCount;
+				blit.dstSubresource.layerCount = 6;
 
-				vkCmdBlitImage(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-
-				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-				vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+				vkCmdBlitImage(commandBuffer, oldImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, newImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
 				if (mipWidth > 1) mipWidth /= 2;
 				if (mipHeight > 1) mipHeight /= 2;
 			}
 
-			barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-			barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-			device.endSingleTimeCommands(commandBuffer);
+			//Transition from transfer source to shader read only
+			VkImageMemoryBarrier toShaderBarrier = newImageBarrier;
+			toShaderBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			toShaderBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			toShaderBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+			toShaderBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+			vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toShaderBarrier);
 		}
 	};
 }

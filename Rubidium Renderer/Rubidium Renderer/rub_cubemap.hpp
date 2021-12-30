@@ -22,8 +22,6 @@ namespace rub
 		~Cubemap();
 
 		void capture(std::vector<RenderObject>& renderObjects);
-		void captureIrradiance();
-		void capturePrefilter();
 		VkImageView getCaptureImageView() { return captureImageView; }
 		AllocatedImage getCaptureImage() { return captureImage; }
 		VkImageView getIrradianceImageView() { return irradianceImageView; }
@@ -60,6 +58,8 @@ namespace rub
 		std::vector<VkImageView> destroyImageViews;
 
 		std::shared_ptr<Model> cubeModel;
+		std::shared_ptr<Material> irradianceMaterial;
+		std::shared_ptr<Material> prefilterMaterial;
 
 		int prefilterIndex;
 
@@ -70,8 +70,11 @@ namespace rub
 		void createDescriptorSet();
 		void cleanup();
 
+		void captureEnvironment(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects);
+		void captureIrradiance(VkCommandBuffer commandBuffer);
+		void capturePrefilter(VkCommandBuffer commandBuffer);
 		void capture(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, 
 			AllocatedImage& image, VkImageView& imageView);
-		void convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels, bool generateMips);
+		//void convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels, bool generateMips);
 	};
 }

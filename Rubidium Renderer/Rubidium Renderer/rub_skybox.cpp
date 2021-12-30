@@ -34,8 +34,6 @@ namespace rub
 		std::vector<RenderObject> renderObjects = { equiObject };
 
 		cubemap->capture(renderObjects);
-		cubemap->captureIrradiance();
-		cubemap->capturePrefilter();
 	}
 
 	void Skybox::draw(VkCommandBuffer commandBuffer)

@@ -21,7 +21,7 @@ namespace rub
 		imageAllocation.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
 		//Create capture image
-		VkImageCreateInfo captureImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
+		VkImageCreateInfo captureImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
 			captureExtent, 1);
 		captureImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		captureImageInfo.arrayLayers = 6;
@@ -33,7 +33,7 @@ namespace rub
 		vkCreateImageView(device.getDevice(), &captureViewInfo, nullptr, &captureImageView);
 
 		//Create irradiance image
-		VkImageCreateInfo irradianceImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
+		VkImageCreateInfo irradianceImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 			irradianceExtent, 1);
 		irradianceImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		irradianceImageInfo.arrayLayers = 6;
@@ -45,7 +45,7 @@ namespace rub
 		vkCreateImageView(device.getDevice(), &irradianceViewInfo, nullptr, &irradianceImageView);
 
 		//Create prefilter image
-		VkImageCreateInfo prefilterImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		VkImageCreateInfo prefilterImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 			captureExtent, captureMipLevels);
 		prefilterImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 		prefilterImageInfo.arrayLayers = 6;
@@ -217,44 +217,96 @@ namespace rub
 	void Cubemap::capture(std::vector<RenderObject>& renderObjects)
 	{
 		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		
+		captureEnvironment(commandBuffer, renderObjects);
+		captureIrradiance(commandBuffer);
+		capturePrefilter(commandBuffer);
+
+		device.endSingleTimeCommands(commandBuffer);
+
+		cleanup();
+	}
+
+	void Cubemap::captureEnvironment(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects)
+	{
+		//Capture environment
 		capture(commandBuffer, renderObjects, captureFramebuffer, captureExtent, captureImage, captureImageView);
-		convertImage(commandBuffer, captureImage, captureImageView, captureExtent, captureMipLevels, true);
-		device.endSingleTimeCommands(commandBuffer);
-		cleanup();
+
+		//Create new image with mips
+		AllocatedImage newImage;
+		VkImageCreateInfo captureImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			captureExtent, captureMipLevels);
+		captureImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+		captureImageInfo.arrayLayers = 6;
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		vmaCreateImage(device.getAllocator(), &captureImageInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
+
+		//Generate mip maps
+		VkUtil::generateMipMaps(commandBuffer, captureImage.image, newImage.image, captureExtent.width, captureExtent.height, 6);
+
+		//Create new image view with mips
+		VkImageView newImageView;
+		VkImageViewCreateInfo captureViewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, newImage.image, VK_IMAGE_ASPECT_COLOR_BIT, captureMipLevels);
+		captureViewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		captureViewInfo.subresourceRange.layerCount = 6;
+		vkCreateImageView(device.getDevice(), &captureViewInfo, nullptr, &newImageView);
+
+		destroyImages.push_back(captureImage);
+		destroyImageViews.push_back(captureImageView);
+
+		captureImage = newImage;
+		captureImageView = newImageView;
 	}
 
-	void Cubemap::captureIrradiance()
+	void Cubemap::captureIrradiance(VkCommandBuffer commandBuffer)
 	{
-		std::shared_ptr<Texture> captureTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
-		std::shared_ptr<Material> captureMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/irradiance_convolution.frag.spv");
-		captureMaterial->addTexture(captureTexture);
+		//Create render object
+		std::shared_ptr<Texture> irradianceTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
+		irradianceMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/irradiance_convolution.frag.spv");
+		irradianceMaterial->addTexture(irradianceTexture);
 
 		RenderObject renderObject{};
 		renderObject.model = cubeModel;
-		renderObject.material = captureMaterial;
+		renderObject.material = irradianceMaterial;
 		renderObject.transform = { glm::vec3(0), glm::vec3(0) };
 		std::vector<RenderObject> renderObjects = { renderObject };
 
-		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		//Capture irradiance
 		capture(commandBuffer, renderObjects, irradianceFramebuffer, irradianceExtent, irradianceImage, irradianceImageView);
-		convertImage(commandBuffer, irradianceImage, irradianceImageView, irradianceExtent, 1, false);
-		device.endSingleTimeCommands(commandBuffer);
-		cleanup();
+
+		//Transition from color attachment to shader read
+		AllocatedImage newImage;
+		VkUtil::convertColorAttachmentToShaderRead(commandBuffer, device.getAllocator(), irradianceImage, newImage, irradianceExtent, 1, 6);
+
+		//Create new image view
+		VkImageView newImageView;
+		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, newImage.image, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		viewInfo.subresourceRange.layerCount = 6;
+		vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &newImageView);
+
+		destroyImages.push_back(irradianceImage);
+		destroyImageViews.push_back(irradianceImageView);
+
+		irradianceImage = newImage;
+		irradianceImageView = newImageView;
 	}
 
-	void Cubemap::capturePrefilter()
+	void Cubemap::capturePrefilter(VkCommandBuffer commandBuffer)
 	{
-		std::shared_ptr<Texture> captureTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
-		std::shared_ptr<Material> captureMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/prefilter.frag.spv");
-		captureMaterial->addTexture(captureTexture);
+		//Create render object
+		std::shared_ptr<Texture> prefilterTexture = std::make_shared<Texture>(device, captureImageView, captureMipLevels);
+		prefilterMaterial = std::make_shared<Material>(device, "shaders/cubemap.vert.spv", "shaders/prefilter.frag.spv");
+		prefilterMaterial->addTexture(prefilterTexture);
 
 		RenderObject renderObject{};
 		renderObject.model = cubeModel;
-		renderObject.material = captureMaterial;
+		renderObject.material = prefilterMaterial;
 		renderObject.transform = { glm::vec3(0), glm::vec3(0) };
 		std::vector<RenderObject> renderObjects = { renderObject };
 
-		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
+		//Capture prefilter
 		for (int i = 0; i < captureMipLevels; i++)
 		{
 			int mipWidth = captureExtent.width * std::pow(0.5f, i);
@@ -273,15 +325,24 @@ namespace rub
 			prefilterIndex = i;
 			capture(commandBuffer, renderObjects, prefilterFramebuffers[i], extent, prefilterImage, prefilterImageViews[i]);
 		}
-		convertImage(commandBuffer, prefilterImage, prefilterImageView, captureExtent, captureMipLevels, false);
-		device.endSingleTimeCommands(commandBuffer);
 
-		for (AllocatedImage& image : destroyImages)
-		{
-			vmaDestroyImage(device.getAllocator(), image.image, image.allocation);
-		}
-		destroyImages.clear();
-		destroyImageViews.clear();
+		//Transition from color attachment to shader read
+		AllocatedImage newImage;
+		VkUtil::convertColorAttachmentToShaderRead(commandBuffer, device.getAllocator(), prefilterImage, newImage, captureExtent, captureMipLevels, 6);
+
+		//Create new image view with mips
+		VkImageView newImageView;
+		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, newImage.image, VK_IMAGE_ASPECT_COLOR_BIT, captureMipLevels);
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+		viewInfo.subresourceRange.layerCount = 6;
+		vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &newImageView);
+
+		destroyImages.push_back(prefilterImage);
+		destroyImageViews.insert(destroyImageViews.end(), prefilterImageViews.begin(), prefilterImageViews.end());
+		prefilterImageViews.clear();
+
+		prefilterImage = newImage;
+		prefilterImageView = newImageView;
 	}
 
 	void Cubemap::capture(VkCommandBuffer commandBuffer, std::vector<RenderObject>& renderObjects, VkFramebuffer frameBuffer, VkExtent2D extent, 
@@ -332,110 +393,6 @@ namespace rub
 		}
 
 		vkCmdEndRenderPass(commandBuffer);
-	}
-
-	void Cubemap::convertImage(VkCommandBuffer commandBuffer, AllocatedImage& oldImage, VkImageView& oldImageView, VkExtent2D extent, int mipLevels, bool generateMips)
-	{
-		//Transfer old image layout from color attachment to transfer source
-		VkImageSubresourceRange colorRange{};
-		colorRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		colorRange.baseMipLevel = 0;
-		colorRange.levelCount = generateMips ? 1 : mipLevels;
-		colorRange.baseArrayLayer = 0;
-		colorRange.layerCount = 6;
-
-		VkImageMemoryBarrier colorToSource{};
-		colorToSource.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		colorToSource.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		colorToSource.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		colorToSource.image = oldImage.image;
-		colorToSource.subresourceRange = colorRange;
-		colorToSource.srcAccessMask = 0;
-		colorToSource.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &colorToSource);
-
-		//Create new image with shader read layout
-		AllocatedImage newImage;
-		VkImageCreateInfo newImageInfo = VkUtil::imageCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, mipLevels);
-		newImageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-		newImageInfo.arrayLayers = 6;
-		VmaAllocationCreateInfo allocationInfo{};
-		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-		vmaCreateImage(device.getAllocator(), &newImageInfo, &allocationInfo, &newImage.image, &newImage.allocation, nullptr);
-
-		//Transfer new image layout from undefined to transfer destination
-		VkImageSubresourceRange undefinedRange{};
-		undefinedRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		undefinedRange.baseMipLevel = 0;
-		undefinedRange.levelCount = mipLevels;
-		undefinedRange.baseArrayLayer = 0;
-		undefinedRange.layerCount = 6;
-
-		VkImageMemoryBarrier undefinedToDst{};
-		undefinedToDst.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		undefinedToDst.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		undefinedToDst.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		undefinedToDst.image = newImage.image;
-		undefinedToDst.subresourceRange = undefinedRange;
-		undefinedToDst.srcAccessMask = 0;
-		undefinedToDst.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &undefinedToDst);
-
-		//Copy the old image into the new image
-		int mipWidth = extent.width;
-		int mipHeight = extent.height;
-		for (int i = 0; i < mipLevels; i++)
-		{
-			int width = extent.width;
-			int height = extent.height;
-			int mipLevel = 0;
-			if (!generateMips)
-			{
-				width = mipWidth;
-				height = mipHeight;
-				mipLevel = i;
-			}
-			VkImageBlit blit{};
-			blit.srcOffsets[0] = { 0, 0, 0 };
-			blit.srcOffsets[1] = { width, height, 1 };
-			blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blit.srcSubresource.mipLevel = mipLevel;
-			blit.srcSubresource.baseArrayLayer = 0;
-			blit.srcSubresource.layerCount = 6;
-			blit.dstOffsets[0] = { 0, 0, 0 };
-			blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
-			blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			blit.dstSubresource.mipLevel = i;
-			blit.dstSubresource.baseArrayLayer = 0;
-			blit.dstSubresource.layerCount = 6;
-
-			vkCmdBlitImage(commandBuffer, oldImage.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, newImage.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
-
-			if (mipWidth > 1) mipWidth /= 2;
-			if (mipHeight > 1) mipHeight /= 2;
-		}		
-
-		//Destroy old image and image view
-		destroyImages.push_back(oldImage);
-		destroyImageViews.push_back(oldImageView);
-
-		//Assign new image and create new image view
-		oldImage = newImage;
-		VkImageViewCreateInfo viewInfo = VkUtil::imageViewCreateInfo(VK_FORMAT_R16G16B16A16_SFLOAT, oldImage.image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-		viewInfo.subresourceRange.layerCount = 6;
-		vkCreateImageView(device.getDevice(), &viewInfo, nullptr, &oldImageView);
-
-		//Transition image layout from transfer destination to shader read
-		VkImageMemoryBarrier toReadable = undefinedToDst;
-		toReadable.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		toReadable.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		toReadable.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		toReadable.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	}
 
 	void Cubemap::cleanup()
