@@ -4,12 +4,15 @@
 
 namespace rub
 {
-	Camera::Camera(Window& window)
+	Camera::Camera(Window& window, int fov)
 	{
 		if (glfwRawMouseMotionSupported())
 		{
 			glfwSetInputMode(window.getWindow(), GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 		}
+
+		float aspectRatio = (float)window.getExtent().width / (float)window.getExtent().height;
+		projectionMatrix = glm::perspective((float)fov, aspectRatio, 0.3f, 1000.0f);
 	}
 
 	void Camera::updatePosition(Window& windowWrapper)
@@ -63,26 +66,34 @@ namespace rub
 		cursorX /= window.getExtent().width;
 		cursorY /= window.getExtent().height;
 
-		double cursorDeltaX = 0;
-		double cursorDeltaY = 0;
-		if (previousCursorX != std::numeric_limits<double>::min() && previousCursorY != std::numeric_limits<double>::min())
+		if (!window.getCursorToggle())
 		{
-			cursorDeltaX = cursorX - previousCursorX;
-			cursorDeltaY = cursorY - previousCursorY;
+			double cursorDeltaX = 0;
+			double cursorDeltaY = 0;
+			if (previousCursorX != std::numeric_limits<double>::min() && previousCursorY != std::numeric_limits<double>::min())
+			{
+				cursorDeltaX = cursorX - previousCursorX;
+				cursorDeltaY = cursorY - previousCursorY;
+			}
+			previousCursorX = cursorX;
+			previousCursorY = cursorY;
+
+			float sensitivity = 200.0f;
+
+			pitch -= cursorDeltaY * sensitivity;
+			yaw += cursorDeltaX * sensitivity;
+			if (pitch > 89.0f)
+				pitch = 89.0f;
+			if (pitch < -89.0f)
+				pitch = -89.0f;
+
+			updateVectors();
 		}
-		previousCursorX = cursorX;
-		previousCursorY = cursorY;
-
-		float sensitivity = 200.0f;
-
-		pitch -= cursorDeltaY * sensitivity;
-		yaw += cursorDeltaX * sensitivity;
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		if (pitch < -89.0f)
-			pitch = -89.0f;
-
-		updateVectors();
+		else
+		{
+			previousCursorX = cursorX;
+			previousCursorY = cursorY;
+		}
 	}
 
 	void Camera::updateVectors()
@@ -96,11 +107,16 @@ namespace rub
 		up = glm::normalize(glm::cross(right, forward));
 	}
 
-	glm::mat4 Camera::getMatrix()
+	glm::mat4 Camera::getProjectionMatrix()
 	{
-		glm::mat4 matrix = glm::lookAt(position, position + forward, up);
+		glm::mat4 projection = projectionMatrix;
+		//projection[1][1] *= -1;
+		return projection;
+	}
 
-		return matrix;
+	glm::mat4 Camera::getViewMatrix()
+	{
+		return glm::lookAt(position, position + forward, up);
 	}
 
 

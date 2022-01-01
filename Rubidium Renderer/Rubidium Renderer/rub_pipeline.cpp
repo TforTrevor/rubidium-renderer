@@ -5,9 +5,14 @@
 
 namespace rub
 {
-	Pipeline::Pipeline(Device& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : rubDevice{ device }
+	Pipeline::Pipeline(Device& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo) : device{ device }
 	{
 		createGraphicsPipeline(vertPath, fragPath, configInfo);
+	}
+
+	Pipeline::Pipeline(Device& device, const std::string& compPath, const VkPipelineLayout pipelineLayout) : device{ device }, isCompute{ true }
+	{
+		createComputePipeline(compPath, pipelineLayout);
 	}
 
 	std::vector<char> Pipeline::readFile(const std::string& filename)
@@ -93,9 +98,35 @@ namespace rub
 		pipelineInfo.basePipelineIndex = -1;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		if (vkCreateGraphicsPipelines(rubDevice.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+		if (vkCreateGraphicsPipelines(device.getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create graphics pipeline");
+		}
+	}
+
+	void Pipeline::createComputePipeline(const std::string& compPath, const VkPipelineLayout pipelineLayout)
+	{
+		auto compShaderCode = readFile(compPath);
+
+		createShaderModule(compShaderCode, &compShaderModule);
+
+		VkPipelineShaderStageCreateInfo shaderStage;
+		shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		shaderStage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+		shaderStage.module = compShaderModule;
+		shaderStage.pName = "main";
+		shaderStage.flags = 0;
+		shaderStage.pNext = nullptr;
+		shaderStage.pSpecializationInfo = nullptr;
+
+		VkComputePipelineCreateInfo pipelineInfo{};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+		pipelineInfo.stage = shaderStage;
+		pipelineInfo.layout = pipelineLayout;
+
+		if (vkCreateComputePipelines(device.getDevice(), nullptr, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create compute pipeline");
 		}
 	}
 
@@ -106,7 +137,7 @@ namespace rub
 		createInfo.codeSize = code.size();
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-		if (vkCreateShaderModule(rubDevice.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
+		if (vkCreateShaderModule(device.getDevice(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create shader module");
 		}
@@ -114,7 +145,14 @@ namespace rub
 
 	void Pipeline::bind(VkCommandBuffer commandBuffer)
 	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+		if (isCompute)
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+		}
+		else
+		{
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		}		
 	}
 
 	void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
@@ -180,8 +218,9 @@ namespace rub
 
 	Pipeline::~Pipeline()
 	{
-		vkDestroyShaderModule(rubDevice.getDevice(), vertShaderModule, nullptr);
-		vkDestroyShaderModule(rubDevice.getDevice(), fragShaderModule, nullptr);
-		vkDestroyPipeline(rubDevice.getDevice(), graphicsPipeline, nullptr);
+		vkDestroyShaderModule(device.getDevice(), vertShaderModule, nullptr);
+		vkDestroyShaderModule(device.getDevice(), fragShaderModule, nullptr);
+		vkDestroyShaderModule(device.getDevice(), compShaderModule, nullptr);
+		vkDestroyPipeline(device.getDevice(), pipeline, nullptr);
 	}
 }

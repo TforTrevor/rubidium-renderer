@@ -29,6 +29,7 @@ namespace rub
 	{
 	public:
 		Pipeline(Device& device, const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
+		Pipeline(Device& device, const std::string& compPath, const VkPipelineLayout pipelineLayout);
 		~Pipeline();
 
 		void bind(VkCommandBuffer commandBuffer);
@@ -36,14 +37,17 @@ namespace rub
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo);
 
 	private:
-		Device& rubDevice;
-		VkPipeline graphicsPipeline;
+		Device& device;
+		VkPipeline pipeline;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;
+		VkShaderModule compShaderModule;
+		const bool isCompute = false;
 
 		static std::vector<char> readFile(const std::string& filePath);
 
 		void createGraphicsPipeline(const std::string& vertPath, const std::string& fragPath, const PipelineConfigInfo& configInfo);
+		void createComputePipeline(const std::string& compPath, const VkPipelineLayout pipelineLayout);
 		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 	};
 }

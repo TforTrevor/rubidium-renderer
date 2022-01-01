@@ -78,6 +78,8 @@ namespace rub
 		std::shared_ptr<Material> previousMaterial = nullptr;
 		std::shared_ptr<Model> previousModel = nullptr;
 
+		std::vector<VkDescriptorSetLayout> setLayouts = { globalLayout, objectLayout };
+
 		for (int i = 0; i < renderObjects.size(); i++)
 		{
 			auto& object = renderObjects[i];
@@ -86,7 +88,7 @@ namespace rub
 			{
 				if (!object.material->isReady())
 				{
-					object.material->setup(globalLayout, objectLayout, renderPass);
+					object.material->setup(setLayouts, renderPass);
 				}
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->getLayout(), 1, 1, &objectDescriptors[frameIndex % FRAME_COUNT], 0, nullptr);
 				globalDescriptor->bind(commandBuffer, object.material->getLayout());

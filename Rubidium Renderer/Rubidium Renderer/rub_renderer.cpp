@@ -101,8 +101,8 @@ namespace rub
 
 	void Renderer::updateCamera()
 	{
-		glm::mat4 view = camera->getMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(70.f), swapChain->getExtentAspectRatio(), 0.1f, 1000.0f);
+		glm::mat4 view = camera->getViewMatrix();
+		glm::mat4 projection = camera->getProjectionMatrix();
 		projection[1][1] *= -1;
 
 		GlobalDescriptor::GPUCameraData cameraData{};
@@ -175,9 +175,9 @@ namespace rub
 
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = 0.0f;
+		viewport.y = static_cast<float>(swapChain->getSwapChainExtent().height);
 		viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
-		viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
+		viewport.height = -static_cast<float>(swapChain->getSwapChainExtent().height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
