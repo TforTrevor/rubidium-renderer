@@ -1,4 +1,4 @@
-#include "rub_material.hpp"
+#include "material.hpp"
 
 #include "vk_util.hpp"
 

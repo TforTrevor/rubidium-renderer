@@ -1,8 +1,8 @@
 #pragma once
 
-#include "rub_model.hpp"
-#include "rub_material.hpp"
-#include "rub_transform.hpp"
+#include "model.hpp"
+#include "material.hpp"
+#include "transform.hpp"
 
 #include <memory>
 

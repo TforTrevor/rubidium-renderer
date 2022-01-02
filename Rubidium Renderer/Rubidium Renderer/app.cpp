@@ -1,4 +1,4 @@
-#include "rub_app.hpp"
+#include "app.hpp"
 
 #include <stdexcept>
 #include <array>

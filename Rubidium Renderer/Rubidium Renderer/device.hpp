@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rub_window.hpp"
+#include "window.hpp"
 
 #include "vk_mem_alloc.h"
 

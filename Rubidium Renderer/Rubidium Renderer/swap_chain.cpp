@@ -1,4 +1,4 @@
-#include "rub_swap_chain.hpp"
+#include "swap_chain.hpp"
 
 #include <array>
 #include <cstdlib>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rub_device.hpp"
+#include "device.hpp"
 
 #include <memory>
 

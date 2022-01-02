@@ -1,4 +1,4 @@
-#include "rub_window.hpp"
+#include "window.hpp"
 
 #include <stdexcept>
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rub_device.hpp"
-#include "rub_pipeline.hpp"
+#include "device.hpp"
+#include "pipeline.hpp"
 #include <memory>
 
 namespace rub

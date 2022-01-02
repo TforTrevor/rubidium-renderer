@@ -209,21 +209,21 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="miniz.c" />
-    <ClCompile Include="rub_app.cpp" />
-    <ClCompile Include="rub_camera.cpp" />
-    <ClCompile Include="rub_compute_shader.cpp" />
-    <ClCompile Include="rub_cubemap.cpp" />
-    <ClCompile Include="rub_device.cpp" />
-    <ClCompile Include="rub_material.cpp" />
-    <ClCompile Include="rub_model.cpp" />
-    <ClCompile Include="rub_pipeline.cpp" />
-    <ClCompile Include="rub_renderer.cpp" />
-    <ClCompile Include="rub_scene.cpp" />
-    <ClCompile Include="rub_skybox.cpp" />
-    <ClCompile Include="rub_swap_chain.cpp" />
-    <ClCompile Include="rub_texture.cpp" />
-    <ClCompile Include="rub_transform.cpp" />
-    <ClCompile Include="rub_window.cpp" />
+    <ClCompile Include="app.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="compute_shader.cpp" />
+    <ClCompile Include="cubemap.cpp" />
+    <ClCompile Include="device.cpp" />
+    <ClCompile Include="material.cpp" />
+    <ClCompile Include="model.cpp" />
+    <ClCompile Include="pipeline.cpp" />
+    <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="scene.cpp" />
+    <ClCompile Include="skybox.cpp" />
+    <ClCompile Include="swap_chain.cpp" />
+    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="transform.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\pbr.frag">
@@ -267,22 +267,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="miniz.h" />
-    <ClInclude Include="rub_app.hpp" />
-    <ClInclude Include="rub_camera.hpp" />
-    <ClInclude Include="rub_compute_shader.hpp" />
-    <ClInclude Include="rub_cubemap.hpp" />
-    <ClInclude Include="rub_device.hpp" />
-    <ClInclude Include="rub_material.hpp" />
-    <ClInclude Include="rub_render_object.hpp" />
-    <ClInclude Include="rub_model.hpp" />
-    <ClInclude Include="rub_pipeline.hpp" />
-    <ClInclude Include="rub_renderer.hpp" />
-    <ClInclude Include="rub_scene.hpp" />
-    <ClInclude Include="rub_skybox.hpp" />
-    <ClInclude Include="rub_swap_chain.hpp" />
-    <ClInclude Include="rub_texture.hpp" />
-    <ClInclude Include="rub_transform.hpp" />
-    <ClInclude Include="rub_window.hpp" />
+    <ClInclude Include="app.hpp" />
+    <ClInclude Include="camera.hpp" />
+    <ClInclude Include="compute_shader.hpp" />
+    <ClInclude Include="cubemap.hpp" />
+    <ClInclude Include="device.hpp" />
+    <ClInclude Include="material.hpp" />
+    <ClInclude Include="render_object.hpp" />
+    <ClInclude Include="model.hpp" />
+    <ClInclude Include="pipeline.hpp" />
+    <ClInclude Include="renderer.hpp" />
+    <ClInclude Include="scene.hpp" />
+    <ClInclude Include="skybox.hpp" />
+    <ClInclude Include="swap_chain.hpp" />
+    <ClInclude Include="texture.hpp" />
+    <ClInclude Include="transform.hpp" />
+    <ClInclude Include="window.hpp" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="tinyexr.h" />
     <ClInclude Include="vk_util.hpp" />

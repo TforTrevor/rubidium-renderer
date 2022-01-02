@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rub_render_object.hpp"
-#include "rub_cubemap.hpp"
+#include "render_object.hpp"
+#include "cubemap.hpp"
 
 namespace rub
 {

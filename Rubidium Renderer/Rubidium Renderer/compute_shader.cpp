@@ -1,4 +1,4 @@
-#include "rub_compute_shader.hpp"
+#include "compute_shader.hpp"
 
 #include "vk_util.hpp"
 

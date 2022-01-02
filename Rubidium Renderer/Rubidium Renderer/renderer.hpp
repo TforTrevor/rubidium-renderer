@@ -1,9 +1,9 @@
 #pragma once
 
-#include "rub_window.hpp"
-#include "rub_device.hpp"
-#include "rub_swap_chain.hpp"
-#include "rub_camera.hpp"
+#include "window.hpp"
+#include "device.hpp"
+#include "swap_chain.hpp"
+#include "camera.hpp"
 
 #include <memory>
 #include <vector>

@@ -1,4 +1,4 @@
-#include "rub_skybox.hpp"
+#include "skybox.hpp"
 
 namespace rub
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rub_render_object.hpp"
+#include "render_object.hpp"
 #include "vk_util.hpp"
 
 namespace rub

@@ -1,4 +1,4 @@
-#include "rub_camera.hpp"
+#include "camera.hpp"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 

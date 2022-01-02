@@ -1,4 +1,4 @@
-#include "rub_scene.hpp"
+#include "scene.hpp"
 
 #include "vk_util.hpp"
 
