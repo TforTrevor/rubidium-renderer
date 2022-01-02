@@ -42,12 +42,6 @@
     <ClCompile Include="rub_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="simple_render_system.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="global_descriptor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rub_texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -101,16 +95,10 @@
     <ClInclude Include="rub_renderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="simple_render_system.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="rub_render_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vk_util.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="global_descriptor.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stb_image.h">

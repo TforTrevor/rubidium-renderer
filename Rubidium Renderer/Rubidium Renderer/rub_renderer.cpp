@@ -15,7 +15,6 @@ namespace rub
 	{
 		recreateSwapChain();
 		createCommandBuffers();
-		globalDescriptor = std::make_unique<GlobalDescriptor>(device, swapChain);
 	}
 
 	void Renderer::createCommandBuffers()
@@ -94,38 +93,7 @@ namespace rub
 			throw std::runtime_error("failed to begin recording command buffer!");
 		}
 
-		updateCamera();
-
 		return commandBuffer;
-	}
-
-	void Renderer::updateCamera()
-	{
-		glm::mat4 view = camera->getViewMatrix();
-		glm::mat4 projection = camera->getProjectionMatrix();
-		projection[1][1] *= -1;
-
-		GlobalDescriptor::GPUCameraData cameraData{};
-		cameraData.view = view;
-		cameraData.projection = projection;
-		cameraData.position = glm::vec4(camera->getPosition(), 0);
-
-		GlobalDescriptor::GPUSceneData sceneData{};
-		sceneData.ambientColor = glm::vec4(0.58f, 0.87f, 0.98f, 0);
-		sceneData.sunDirection = glm::vec4(0, 0.5f, 0.5f, 0);
-		sceneData.sunColor = glm::vec4(1.0f, 1.0f, 1.0f, 0);
-
-		GlobalDescriptor::GPULightData lightData{};
-		lightData.lightPositions[0] = glm::vec4(-1.5f, 0.0f, -3.0f, 0.0f);
-		lightData.lightPositions[1] = glm::vec4(1.5f, 0.0f, -3.0f, 0.0f);
-		lightData.lightPositions[2] = glm::vec4(0.0f, 2.0f, 2.0f, 0.0f);
-		lightData.lightColors[0] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
-		lightData.lightColors[1] = glm::vec4(1.0f, 1.0f, 1.0f, 5.0f);
-		lightData.lightColors[2] = glm::vec4(0.5f, 0.5f, 1.0f, 25.0f);
-
-		globalDescriptor->updateCameraBuffer(cameraData);
-		globalDescriptor->updateSceneBuffer(sceneData);
-		globalDescriptor->updateLightBuffer(lightData);
 	}
 
 	void Renderer::endFrame()

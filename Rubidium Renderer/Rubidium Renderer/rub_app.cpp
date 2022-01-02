@@ -1,5 +1,4 @@
 #include "rub_app.hpp"
-#include "simple_render_system.hpp"
 
 #include <stdexcept>
 #include <array>
@@ -17,13 +16,11 @@ namespace rub
 	void RubApp::run()
 	{
 		std::shared_ptr<Camera> camera = std::make_shared<Camera>(window, 70);
-		renderer.setCamera(camera);
 		camera->setPosition(glm::vec3(0, 0, -3.0f));
 
 		scene = std::make_unique<Scene>(device, renderer.getSwapChain(), camera, "textures/spruit_sunrise_2k.exr", renderObjects);
 
 		VkRenderPass renderPass = renderer.getRenderPass();
-		//SimpleRenderSystem renderSystem{ device, renderer.getSwapChain() };
 
 		double lastTime = glfwGetTime();
 		int nbFrames = 0;
@@ -45,7 +42,6 @@ namespace rub
 				auto cpuTime1 = high_resolution_clock::now();
 				renderer.beginRenderPass(commandBuffer);
 				scene->draw(commandBuffer, renderPass);
-				//renderSystem.renderModels(commandBuffer, renderObjects, renderer.getGlobalDescriptor(), renderPass);
 				renderer.endRenderPass(commandBuffer);
 				auto cpuTime2 = high_resolution_clock::now();
 				duration<double, std::milli> cpuTimeMs = cpuTime2 - cpuTime1;

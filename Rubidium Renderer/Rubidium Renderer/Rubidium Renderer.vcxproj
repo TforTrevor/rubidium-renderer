@@ -207,7 +207,6 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="global_descriptor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="miniz.c" />
     <ClCompile Include="rub_app.cpp" />
@@ -225,7 +224,6 @@
     <ClCompile Include="rub_texture.cpp" />
     <ClCompile Include="rub_transform.cpp" />
     <ClCompile Include="rub_window.cpp" />
-    <ClCompile Include="simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\pbr.frag">
@@ -268,7 +266,6 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="global_descriptor.hpp" />
     <ClInclude Include="miniz.h" />
     <ClInclude Include="rub_app.hpp" />
     <ClInclude Include="rub_camera.hpp" />
@@ -286,7 +283,6 @@
     <ClInclude Include="rub_texture.hpp" />
     <ClInclude Include="rub_transform.hpp" />
     <ClInclude Include="rub_window.hpp" />
-    <ClInclude Include="simple_render_system.hpp" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="tinyexr.h" />
     <ClInclude Include="vk_util.hpp" />
