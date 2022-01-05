@@ -31,10 +31,10 @@ namespace rub
 		brdfShader = std::make_unique<ComputeShader>(device, "shaders/brdf.comp.spv", brdfImageView, empty);
 		
 		VkCommandBuffer commandBuffer = device.beginSingleTimeCommands();
-		VkUtil::transitionUndefinedToGeneral(commandBuffer, brdfImage.image, 1);
+		VkUtil::transitionUndefinedToGeneral(commandBuffer, brdfImage.image, 1, 1);
 		brdfShader->bind(commandBuffer);
 		vkCmdDispatch(commandBuffer, 32, 32, 1);
-		VkUtil::transitionGeneralToShader(commandBuffer, brdfImage.image, 1);
+		VkUtil::transitionGeneralToShader(commandBuffer, brdfImage.image, 1, 1);
 		device.endSingleTimeCommands(commandBuffer);
 	}
 

@@ -459,32 +459,31 @@ namespace rub
 		throw std::runtime_error("failed to find supported format!");
 	}
 
+	//void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	//{
+	//	if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to create image!");
+	//	}
 
-	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
-	{
-		if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create image!");
-		}
+	//	VkMemoryRequirements memRequirements;
+	//	vkGetImageMemoryRequirements(device, image, &memRequirements);
 
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(device, image, &memRequirements);
+	//	VkMemoryAllocateInfo allocInfo{};
+	//	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	//	allocInfo.allocationSize = memRequirements.size;
+	//	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+	//	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to allocate image memory!");
+	//	}
 
-		if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate image memory!");
-		}
-
-		if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to bind image memory!");
-		}
-	}
+	//	if (vkBindImageMemory(device, image, imageMemory, 0) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to bind image memory!");
+	//	}
+	//}
 
 	void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, AllocatedBuffer& allocatedBuffer)
 	{

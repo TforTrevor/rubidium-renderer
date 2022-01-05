@@ -110,7 +110,7 @@ vec2 IntegrateBRDF(float NdotV, float roughness)
 // ----------------------------------------------------------------------------
 void main() 
 {
-    float u = float(gl_GlobalInvocationID.x) / float(imageSize(outImage).x) + 0.001;
+    float u = float(gl_GlobalInvocationID.x) / float(imageSize(outImage).x) + 0.00001;
     float v = 1.0 - float(gl_GlobalInvocationID.y) / float(imageSize(outImage).y);
     vec2 integratedBRDF = IntegrateBRDF(u, v);
     vec4 brdf = vec4(integratedBRDF, 0, 0);

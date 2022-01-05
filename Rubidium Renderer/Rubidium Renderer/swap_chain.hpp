@@ -37,8 +37,7 @@ namespace rub
 		std::vector<VkFramebuffer> swapChainFramebuffers;
 		VkRenderPass renderPass;
 
-		std::vector<VkImage> depthImages;
-		std::vector<VkDeviceMemory> depthImageMemorys;
+		std::vector<AllocatedImage> depthImages;
 		std::vector<VkImageView> depthImageViews;
 		std::vector<VkImage> swapChainImages;
 		std::vector<VkImageView> swapChainImageViews;
