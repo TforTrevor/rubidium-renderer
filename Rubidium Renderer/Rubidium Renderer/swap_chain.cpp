@@ -1,4 +1,4 @@
-#include "rub_swap_chain.hpp"
+#include "swap_chain.hpp"
 
 #include <array>
 #include <cstdlib>
@@ -129,10 +129,11 @@ namespace rub
 		VkFormat depthFormat = findDepthFormat();
 		VkExtent2D swapChainExtent = getSwapChainExtent();
 
-		depthImages.resize(imageCount());
-		depthImageMemorys.resize(imageCount());
-		depthImageViews.resize(imageCount());
+		VmaAllocationCreateInfo allocationInfo{};
+		allocationInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
+		depthImages.resize(imageCount());
+		depthImageViews.resize(imageCount());
 		for (int i = 0; i < depthImages.size(); i++)
 		{
 			VkImageCreateInfo imageInfo{};
@@ -151,11 +152,11 @@ namespace rub
 			imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			imageInfo.flags = 0;
 
-			device.createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i], depthImageMemorys[i]);
+			vmaCreateImage(device.getAllocator(), &imageInfo, &allocationInfo, &depthImages[i].image, &depthImages[i].allocation, nullptr);
 
 			VkImageViewCreateInfo viewInfo{};
 			viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			viewInfo.image = depthImages[i];
+			viewInfo.image = depthImages[i].image;
 			viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 			viewInfo.format = depthFormat;
 			viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -422,8 +423,7 @@ namespace rub
 		for (int i = 0; i < depthImages.size(); i++)
 		{
 			vkDestroyImageView(device.getDevice(), depthImageViews[i], nullptr);
-			vkDestroyImage(device.getDevice(), depthImages[i], nullptr);
-			vkFreeMemory(device.getDevice(), depthImageMemorys[i], nullptr);
+			vmaDestroyImage(device.getAllocator(), depthImages[i].image, depthImages[i].allocation);
 		}
 
 		for (auto framebuffer : swapChainFramebuffers)

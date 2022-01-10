@@ -1,11 +1,11 @@
 #pragma once
 
-#include "rub_render_object.hpp"
-#include "rub_cubemap.hpp"
-#include "rub_camera.hpp"
-#include "rub_swap_chain.hpp"
-#include "rub_skybox.hpp"
-#include "rub_compute_shader.hpp"
+#include "render_object.hpp"
+#include "cubemap.hpp"
+#include "camera.hpp"
+#include "swap_chain.hpp"
+#include "skybox.hpp"
+#include "compute_shader.hpp"
 
 namespace rub
 {

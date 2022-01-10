@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rub_transform.hpp"
-#include "rub_window.hpp"
+#include "transform.hpp"
+#include "window.hpp"
 
 namespace rub
 {

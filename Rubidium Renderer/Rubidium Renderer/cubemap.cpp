@@ -1,4 +1,4 @@
-#include "rub_cubemap.hpp"
+#include "cubemap.hpp"
 
 #include <stdexcept>
 

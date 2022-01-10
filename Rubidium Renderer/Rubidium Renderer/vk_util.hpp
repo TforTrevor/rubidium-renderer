@@ -122,69 +122,10 @@ namespace rub
 			return write;
 		}
 
-		static void transitionImageColorToShader(VkCommandBuffer commandBuffer, VkImage image, int layerCount)
-		{
-			VkImageMemoryBarrier imageBarrier{};
-			imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageBarrier.image = image;
-			imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageBarrier.subresourceRange.baseMipLevel = 0;
-			imageBarrier.subresourceRange.levelCount = 1;
-			imageBarrier.subresourceRange.layerCount = layerCount;
-			imageBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-		}
-
 		static unsigned int calculateMipLevels(const unsigned int width, const unsigned int height)
 		{
 			unsigned int mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 			return mipLevels;
-		}
-
-		static void transitionUndefinedToGeneral(VkCommandBuffer commandBuffer, VkImage image, int layerCount)
-		{
-			VkImageMemoryBarrier imageBarrier{};
-			imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			imageBarrier.pNext = nullptr;
-			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-			imageBarrier.image = image;
-			imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageBarrier.subresourceRange.baseMipLevel = 0;
-			imageBarrier.subresourceRange.levelCount = 1;
-			imageBarrier.subresourceRange.layerCount = layerCount;
-			imageBarrier.srcAccessMask = VK_ACCESS_NONE_KHR;
-			imageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-
-			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-		}
-
-		static void transitionGeneralToShader(VkCommandBuffer commandBuffer, VkImage image, int layerCount)
-		{
-			VkImageMemoryBarrier imageBarrier{};
-			imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-			imageBarrier.pNext = nullptr;
-			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-			imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageBarrier.image = image;
-			imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageBarrier.subresourceRange.baseMipLevel = 0;
-			imageBarrier.subresourceRange.levelCount = 1;
-			imageBarrier.subresourceRange.layerCount = layerCount;
-			imageBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-			imageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-
-			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 		}
 
 		static VkImageMemoryBarrier imageMemoryBarrier(VkImage image, VkImageAspectFlags aspectMask, int mipLevels, int layerCount)
@@ -200,6 +141,22 @@ namespace rub
 			imageBarrier.subresourceRange.levelCount = mipLevels;
 
 			return imageBarrier;
+		}
+
+		static void transitionUndefinedToGeneral(VkCommandBuffer commandBuffer, VkImage image, int mipLevels, int layerCount)
+		{
+			VkImageMemoryBarrier imageBarrier = imageMemoryBarrier(image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+		}
+
+		static void transitionGeneralToShader(VkCommandBuffer commandBuffer, VkImage image, int mipLevels, int layerCount)
+		{
+			VkImageMemoryBarrier imageBarrier = imageMemoryBarrier(image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 		}
 
 		static void convertColorAttachmentToShaderRead(VkCommandBuffer commandBuffer, VmaAllocator allocator, AllocatedImage input, AllocatedImage& output, 

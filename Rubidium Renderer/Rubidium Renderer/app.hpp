@@ -1,13 +1,13 @@
 #pragma once
 
-#include "rub_window.hpp"
-#include "rub_pipeline.hpp"
-#include "rub_device.hpp"
-#include "rub_swap_chain.hpp"
-#include "rub_render_object.hpp"
-#include "rub_renderer.hpp"
-#include "rub_texture.hpp"
-#include "rub_scene.hpp"
+#include "window.hpp"
+#include "pipeline.hpp"
+#include "device.hpp"
+#include "swap_chain.hpp"
+#include "render_object.hpp"
+#include "renderer.hpp"
+#include "texture.hpp"
+#include "scene.hpp"
 
 #include <memory>
 #include <vector>
