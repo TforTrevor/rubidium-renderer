@@ -64,6 +64,8 @@ namespace rub
 
 	void Device::createInstance()
 	{
+		volkInitialize();
+
 		if (enableValidationLayers && !checkValidationLayerSupport())
 		{
 			throw std::runtime_error("validation layers requested, but not available!");
@@ -75,7 +77,7 @@ namespace rub
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion = VK_API_VERSION_1_2;
+		appInfo.apiVersion = VK_API_VERSION_1_3;
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -104,6 +106,8 @@ namespace rub
 		{
 			throw std::runtime_error("failed to create instance!");
 		}
+
+		volkLoadInstance(instance);
 
 		hasGflwRequiredInstanceExtensions();
 	}
@@ -573,11 +577,16 @@ namespace rub
 
 	void Device::createAllocator()
 	{
+		VmaVulkanFunctions vulkanFunctions{};
+		vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+		vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+
 		VmaAllocatorCreateInfo allocatorInfo = {};
-		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+		//allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
 		allocatorInfo.physicalDevice = physicalDevice;
 		allocatorInfo.device = device;
 		allocatorInfo.instance = instance;
+		allocatorInfo.pVulkanFunctions = &vulkanFunctions;
 
 		vmaCreateAllocator(&allocatorInfo, &allocator);
 	}

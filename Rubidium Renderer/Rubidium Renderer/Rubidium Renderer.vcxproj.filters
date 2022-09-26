@@ -86,9 +86,6 @@
     <ClInclude Include="model.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vk_mem_alloc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="app.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
