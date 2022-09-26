@@ -21,16 +21,6 @@ namespace rub
 		rapidobj::Result objResult = rapidobj::ParseFile(modelPath);
 		rapidobj::Triangulate(objResult);
 
-		//tinyobj::attrib_t attrib;
-		//std::vector<tinyobj::shape_t> shapes;
-		//std::vector<tinyobj::material_t> materials;
-		//std::string warn, err;
-
-		//if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str()))
-		//{
-		//	throw std::runtime_error(warn + err);
-		//}
-
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 
