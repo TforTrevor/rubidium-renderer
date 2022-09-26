@@ -1,7 +1,6 @@
 #include "model.hpp"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
+#include <rapidobj/rapidobj.hpp>
 
 #include <cassert>
 #include <stdexcept>
@@ -17,53 +16,57 @@ namespace rub
 		loadOBJ(modelPath);
 	}
 
-	void Model::loadOBJ(const std::string modelPath)
+	void Model::loadOBJ(const std::string& modelPath)
 	{
-		tinyobj::attrib_t attrib;
-		std::vector<tinyobj::shape_t> shapes;
-		std::vector<tinyobj::material_t> materials;
-		std::string warn, err;
+		rapidobj::Result objResult = rapidobj::ParseFile(modelPath);
+		rapidobj::Triangulate(objResult);
 
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str()))
-		{
-			throw std::runtime_error(warn + err);
-		}
+		//tinyobj::attrib_t attrib;
+		//std::vector<tinyobj::shape_t> shapes;
+		//std::vector<tinyobj::material_t> materials;
+		//std::string warn, err;
+
+		//if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str()))
+		//{
+		//	throw std::runtime_error(warn + err);
+		//}
 
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 
 		std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-		for (const auto& shape : shapes)
+		for (const auto& shape : objResult.shapes)
 		{
 			for (const auto& index : shape.mesh.indices)
 			{
 				Vertex vertex{};
 
 				vertex.position = {
-					attrib.vertices[3 * index.vertex_index + 0],
-					attrib.vertices[3 * index.vertex_index + 1],
-					attrib.vertices[3 * index.vertex_index + 2]
+					objResult.attributes.positions[3 * index.position_index + 0],
+					objResult.attributes.positions[3 * index.position_index + 1],
+					objResult.attributes.positions[3 * index.position_index + 2]
 				};
 
 				vertex.normal = {
-					attrib.normals[3 * index.normal_index + 0],
-					attrib.normals[3 * index.normal_index + 1],
-					attrib.normals[3 * index.normal_index + 2]
+					objResult.attributes.normals[3 * index.normal_index + 0],
+					objResult.attributes.normals[3 * index.normal_index + 1],
+					objResult.attributes.normals[3 * index.normal_index + 2]
 				};
 
 				vertex.texCoord = {
-					attrib.texcoords[2 * index.texcoord_index + 0],
-					attrib.texcoords[2 * index.texcoord_index + 1]
+					objResult.attributes.texcoords[2 * index.texcoord_index + 0],
+					objResult.attributes.texcoords[2 * index.texcoord_index + 1]
 				};
 
 				vertex.color = {
-					attrib.colors[3 * index.vertex_index + 0],
+					/*attrib.colors[3 * index.vertex_index + 0],
 					attrib.colors[3 * index.vertex_index + 1],
-					attrib.colors[3 * index.vertex_index + 2]
+					attrib.colors[3 * index.vertex_index + 2]*/
 					//attrib.normals[3 * index.normal_index + 0],
 					//attrib.normals[3 * index.normal_index + 1],
 					//attrib.normals[3 * index.normal_index + 2]
+					1, 1, 1
 				};
 
 				if (uniqueVertices.count(vertex) == 0)
@@ -79,8 +82,9 @@ namespace rub
 		createVertexBuffer(vertices);
 		createIndexBuffer(indices);
 
-		std::cout << "Vertex count: " << vertices.size() << std::endl;
-		std::cout << "Index count: " << indices.size() << std::endl;
+		std::cout << "OBJ File: " << modelPath << std::endl;
+		std::cout << "\tVertex count: " << vertices.size() << std::endl;
+		std::cout << "\tIndex count: " << indices.size() << std::endl;
 	}
 
 	void Model::createVertexBuffer(const std::vector<Vertex>& vertices)
