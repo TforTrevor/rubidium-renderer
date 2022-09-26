@@ -48,7 +48,7 @@ namespace rub
 		AllocatedBuffer indexBuffer;
 		uint32_t indexCount;
 
-		void loadOBJ(const std::string modelPath);
+		void loadOBJ(const std::string& modelPath);
 		void createVertexBuffer(const std::vector<Vertex>& vertices);
 		void createIndexBuffer(const std::vector<uint32_t>& indices);
 	};

@@ -146,6 +146,8 @@ namespace rub
 		static void transitionUndefinedToGeneral(VkCommandBuffer commandBuffer, VkImage image, int mipLevels, int layerCount)
 		{
 			VkImageMemoryBarrier imageBarrier = imageMemoryBarrier(image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
@@ -154,6 +156,8 @@ namespace rub
 		static void transitionGeneralToShader(VkCommandBuffer commandBuffer, VkImage image, int mipLevels, int layerCount)
 		{
 			VkImageMemoryBarrier imageBarrier = imageMemoryBarrier(image, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels, layerCount);
+			imageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+			imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			VkPipelineStageFlagBits srcFlags = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 			VkPipelineStageFlagBits dstFlags = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 			vkCmdPipelineBarrier(commandBuffer, srcFlags, dstFlags, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);

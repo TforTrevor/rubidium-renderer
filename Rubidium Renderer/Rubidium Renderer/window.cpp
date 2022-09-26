@@ -1,3 +1,4 @@
+#define VOLK_IMPLEMENTATION
 #include "window.hpp"
 
 #include <stdexcept>
@@ -27,6 +28,8 @@ namespace rub
 
 	void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 	{
+		volkLoadInstance(instance);
+
 		if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create window surface!");
