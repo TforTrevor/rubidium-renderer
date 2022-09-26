@@ -138,7 +138,7 @@ namespace rub
 				VkPhysicalDeviceFeatures deviceFeatures;
 				vkGetPhysicalDeviceProperties(device, &deviceProperties);
 				std::cout << "GPU: " << deviceProperties.deviceName << std::endl;
-				break;
+				//break;
 			}
 		}
 
@@ -149,7 +149,7 @@ namespace rub
 		else
 		{
 			vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
-			///std::cout << "The GPU has a minimum buffer alignment of " << deviceProperties.limits.minUniformBufferOffsetAlignment << std::endl;
+			std::cout << "The GPU has a minimum buffer alignment of " << deviceProperties.limits.minUniformBufferOffsetAlignment << std::endl;
 		}
 	}
 
